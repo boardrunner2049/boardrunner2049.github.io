@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>BoardRunner Field Notes</title>
+    <link>https://boardrunner2049.github.io/blog/</link>
+    <description>Technical writing on firmware rehosting, device models, virtual I/O, and cyber-physical systems simulation.</description>
+    <language>en</language>
+    <lastBuildDate>Tue, 13 Oct 2026 21:00:00 -0400</lastBuildDate>
+    <item>
+      <title>What virtual I/O has to carry</title>
+      <link>https://boardrunner2049.github.io/blog/virtual-io-at-the-boundary/</link>
+      <guid isPermaLink="true">https://boardrunner2049.github.io/blog/virtual-io-at-the-boundary/</guid>
+      <pubDate>Tue, 13 Oct 2026 21:00:00 -0400</pubDate>
+      <description>A closer look at the boundary between a peripheral model, LibVIO, and the device or host on the other side.</description>
+    </item>
+  </channel>
+</rss>

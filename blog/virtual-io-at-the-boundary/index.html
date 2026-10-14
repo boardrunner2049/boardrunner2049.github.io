@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f4f1e9">
+  <meta name="description" content="A BoardRunner field note on the boundary between firmware, peripheral models, LibVIO, and the world beyond an emulated board.">
+  <title>What virtual I/O has to carry — BoardRunner Field Notes</title>
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="alternate" type="application/rss+xml" title="BoardRunner Field Notes" href="../feed.xml">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header"><div class="wrap header-inner">
+    <a class="wordmark" href="../../" aria-label="BoardRunner home"><span class="wordmark-mark" aria-hidden="true">B<span>R</span></span><span>BoardRunner</span></a>
+    <nav aria-label="Main navigation"><a href="../../#interaction">The interaction</a><a href="../../#system">The system</a><a href="../../#start">Get started</a><a href="../">Blog</a></nav>
+    <a class="header-github" href="https://github.com/boardrunner2049">GitHub <span aria-hidden="true">↗</span></a>
+  </div></header>
+  <main id="main">
+    <article class="blog-article">
+      <header class="article-header wrap">
+        <a class="back-link" href="../">← All field notes</a>
+        <div class="hero-kicker"><span class="line-dot" aria-hidden="true"></span> Field note / 001 / explainer</div>
+        <h1>What virtual I/O<br><span>has to carry.</span></h1>
+        <p class="article-deck">A peripheral model has to answer firmware in the terms that firmware expects. It also has to exchange data with something beyond the modeled controller. That second conversation is where virtual I/O becomes useful.</p>
+        <div class="article-meta"><time datetime="2026-10-13">13 October 2026</time><span>LIBVIO / DEVICE MODELS</span></div>
+      </header>
+      <div class="article-body wrap">
+        <aside class="article-aside" aria-label="In this note"><span class="eyebrow">IN THIS NOTE</span><nav aria-label="Article sections"><a href="#two-sides">Two sides of a model</a><a href="#bus-example">An I²C example</a><a href="#other-paths">Other paths out</a><a href="#scope">What this establishes</a></nav></aside>
+        <div class="article-content">
+          <section id="two-sides" aria-labelledby="two-sides-title">
+            <h2 id="two-sides-title">Two sides of a model</h2>
+            <p>Rehosting means running firmware away from its original board. That firmware still reads and writes peripheral registers, waits for inputs, and produces outputs. A peripheral model interprets those firmware-facing operations. The model’s other side needs an interface to a device model, a host resource, or another peripheral.</p>
+            <p><a href="https://github.com/boardrunner2049/LibVIO/blob/main/docs/API.md">LibVIO’s API guide</a> draws this division clearly. It describes a device model as an emulated peripheral loaded by an emulator, a slave model as a separate chip model on an SPI or I²C bus, and host-side resources such as terminals, files, and network interfaces. LibVIO supplies ways for those pieces to exchange data.</p>
+            <div class="article-callout"><span>BOUNDARY / 01</span><p>The firmware-facing register behavior belongs to a peripheral model. LibVIO supplies interfaces that model can use on the other side.</p></div>
+          </section>
+          <section id="bus-example" aria-labelledby="bus-example-title">
+            <h2 id="bus-example-title">An I²C example</h2>
+            <p>The guide includes an example bus configuration with a <code>bme280</code> slave at address <code>0x76</code>. Its sample slave code initializes register <code>0xD0</code> to <code>0x60</code>, a chip ID value. A controller model can use LibVIO’s documented start, send, receive, and end operations to communicate with a configured slave.</p>
+            <figure class="article-diagram"><div class="article-path"><span>firmware</span><b>→</b><span>controller model</span><b>→</b><span>LibVIO I²C bus</span><b>→</b><span>slave model</span></div><figcaption>Conceptual route for a register read, based on the <a href="https://github.com/boardrunner2049/LibVIO/blob/main/docs/API.md">LibVIO guide</a>. A response travels back toward firmware. This is an explanatory diagram, not a captured execution.</figcaption></figure>
+            <p>The bus is one possible route. The slave is pluggable, so the controller model does not need the sensor’s behavior embedded in its own code. The guide also shows that a single slave library can keep separate state for multiple attached instances.</p>
+          </section>
+          <section id="other-paths" aria-labelledby="other-paths-title">
+            <h2 id="other-paths-title">Other paths out</h2>
+            <p>Not every peripheral connects to a bus slave. A UART model can use a pseudo-terminal for serial bytes. A network model can exchange frames through a TAP interface. LibVIO also documents FIFOs, files, analog inputs, signals, and DMA requests. The choice follows the interaction a model needs to reproduce.</p>
+            <p>Physical board access is a different responsibility. <a href="https://github.com/boardrunner2049/libhw/blob/main/README.md">libhw</a> provides a common interface for memory operations and flash programming through ST-Link, OpenOCD, and a mock backend. It is useful for work involving a target board; it is not the virtual I/O path in the conceptual sensor example.</p>
+          </section>
+          <section id="scope" aria-labelledby="scope-title">
+            <h2 id="scope-title">What this establishes</h2>
+            <p>The public LibVIO source and documentation establish these interfaces and examples. They do not, by themselves, demonstrate a complete firmware run through BoardRunner. The broader rehosting system and its FastDyn execution engine are described by the <a href="https://github.com/boardrunner2049">project organization</a>, while their public repositories currently contain no implementation files.</p>
+            <p>For model work, the practical next step is the <a href="https://github.com/boardrunner2049/LibVIO/blob/main/docs/API.md">LibVIO API guide</a> and its <a href="https://github.com/boardrunner2049/LibVIO/blob/main/contract/api_reference.md">function reference</a>. They define the available calls more precisely than this note can.</p>
+          </section>
+          <div class="article-end"><span>END / 001</span><a href="../">More field notes ↗</a></div>
+        </div>
+      </div>
+    </article>
+  </main>
+  <footer class="site-footer"><div class="wrap footer-inner"><a class="wordmark footer-mark" href="../../"><span class="wordmark-mark" aria-hidden="true">B<span>R</span></span><span>BoardRunner</span></a><p>Firmware, devices, and the world between.</p><div><a href="https://github.com/boardrunner2049">GitHub ↗</a><a href="https://discord.gg/wYFbUQT5y">Discord ↗</a></div></div></footer>
+</body>
+</html>
