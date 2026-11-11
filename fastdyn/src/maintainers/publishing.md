@@ -11,12 +11,15 @@ The FastDyn handbook is an mdBook published at [boardrunner2049.github.io/fastdy
 | `fastdyn/src/SUMMARY.md` | Chapter order, nesting, and part headings |
 | `fastdyn/src/<topic>/*.md` | Editable chapter sources |
 | `fastdyn/book/` | Generated book output, ignored by Git |
+| `site-theme.css` | Shared BoardRunner colors and fonts used by the website and handbook |
 | `scripts/install-book-tools.sh` | Install the pinned Linux prebuilt tools under `.tools/bin` |
 | `scripts/build-site.sh` | Build the handbook, assemble the complete `_site` tree, and validate it |
 | `scripts/check-site.py` | Check rendered local links, anchors, and navigation |
 | `.github/workflows/pages.yml` | Build and deploy the complete site from `main` |
 
 Edit the Markdown under `fastdyn/src/`. Generated output and downloaded tools are build products. Commit source files and intentional build configuration changes; keep `fastdyn/book/`, `_site/`, `.tools/`, and generated Mermaid assets out of source commits.
+
+The shared visual design belongs to root `site-theme.css`: the website's `styles.css` imports it, and the build copies it to ignored `fastdyn/theme/site-theme.css` for mdBook to load before `fastdyn/theme/fastdyn.css`. Edit and commit the shared source, never the generated copy. The handbook uses the same BR mark, wordmark, and site navigation. It defaults to the light palette even when the operating system prefers dark mode; manually selected dark themes use charcoal and peach. The custom `fastdyn/theme/mermaid-init.js` reads the CSS palette and uses Mermaid's base theme, refreshing diagrams when readers switch between light and dark palettes.
 
 ## Install the pinned tools
 

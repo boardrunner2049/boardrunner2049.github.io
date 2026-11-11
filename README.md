@@ -6,7 +6,8 @@ This repository publishes [boardrunner2049.github.io](https://boardrunner2049.gi
 
 | Path | Purpose |
 | --- | --- |
-| `index.html`, `styles.css`, `favicon.svg` | BoardRunner homepage and shared website assets |
+| `index.html`, `styles.css`, `favicon.svg` | BoardRunner homepage and website layout |
+| `site-theme.css` | Shared colors and fonts for the website and book |
 | `blog/` | Blog archive, posts, and RSS feed |
 | `fastdyn/book.toml` | mdBook configuration |
 | `fastdyn/src/` | All handbook chapters and `SUMMARY.md` navigation |
@@ -49,6 +50,8 @@ Keep claims and examples tied to their inspected implementation revision. Distin
 After building, review the changed chapter, sidebar, tables, code blocks, and diagrams. Test search and the navigation tabs. A successful documentation build does not establish that a firmware experiment was rerun.
 
 ## Update the homepage or blog
+
+The homepage and handbook share `site-theme.css` for their palette and typography. Change those values there; the build copies them into the book. Keep book-specific layout and component styling in `fastdyn/theme/fastdyn.css`. The generated `fastdyn/theme/site-theme.css` copy is ignored by Git.
 
 Edit the relevant HTML and check technical claims against the source repositories. Keep conceptual examples labeled. The LibVIO excerpt on the homepage is attributed to its [API guide](https://github.com/boardrunner2049/LibVIO/blob/main/docs/API.md).
 

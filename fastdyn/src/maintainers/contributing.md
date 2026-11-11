@@ -42,6 +42,8 @@ Use relative `.md` links between book pages, with fragment anchors where necessa
 
 Use language-tagged fences such as `bash`, `toml`, `python`, `c`, or `json` for examples. A schematic snippet should say so in the surrounding text. An expected-output block should identify which parts are stable and which depend on the run.
 
+For visual changes, edit root `site-theme.css` for shared colors and fonts, and `fastdyn/theme/fastdyn.css` for the handbook's layout and component styling. Preserve the common BR mark, wordmark, and site navigation. The build regenerates `fastdyn/theme/site-theme.css` from the shared source; keep that ignored copy out of commits. Review the website and handbook together, including the default light palette, optional charcoal and peach dark themes, and Mermaid diagrams after a light/dark switch. The [publishing guide](publishing.md) explains how the shared design reaches the built site.
+
 ## Maintain the diagrams
 
 The handbook currently contains six fenced Mermaid diagrams. They are built through `mdbook-mermaid`, so retain the `mermaid` fence and keep the diagram source with its chapter. The build installs the required generated JavaScript assets; contributors do not need to commit those assets.

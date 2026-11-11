@@ -21,12 +21,13 @@ fi
 # These assets are generated from the pinned preprocessor, never a CDN.
 # Recreate them so a local tool upgrade cannot leave an old renderer behind.
 rm -f fastdyn/mermaid.min.js fastdyn/mermaid-init.js
+cp site-theme.css fastdyn/theme/site-theme.css
 mdbook-mermaid install fastdyn
 mdbook build fastdyn
 
 rm -rf -- "$repo_root/_site"
 mkdir -p _site
-cp index.html styles.css favicon.svg _site/
+cp index.html styles.css site-theme.css favicon.svg _site/
 cp -R blog _site/blog
 cp -R fastdyn/book _site/fastdyn
 touch _site/.nojekyll

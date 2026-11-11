@@ -1,57 +1,239 @@
 :root {
   --content-max-width: 900px;
+  --mono-font: var(--font-mono);
 }
 
-.light {
-  --links: #963e25;
+/* The default reading palette is the same paper, ink, and terracotta as the site. */
+html.light, html.rust, html:not(.js) {
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --sidebar-bg: var(--paper-deep);
+  --sidebar-fg: var(--ink);
+  --sidebar-non-existant: var(--muted);
+  --sidebar-active: var(--accent-dark);
+  --sidebar-spacer: var(--line);
+  --sidebar-header-border-color: var(--accent);
+  --scrollbar: #a7a89a;
+  --icons: var(--muted);
+  --icons-hover: var(--accent-dark);
+  --links: var(--accent-dark);
+  --inline-code-color: var(--accent-dark);
+  --theme-popup-bg: var(--white);
+  --theme-popup-border: var(--line);
+  --theme-hover: var(--paper-deep);
+  --quote-bg: var(--paper-deep);
+  --quote-border: var(--accent);
+  --warning-border: var(--accent);
+  --table-border-color: var(--line);
+  --table-header-bg: var(--paper-deep);
+  --table-alternate-bg: #eeebe2;
+  --searchbar-border-color: var(--line);
+  --searchbar-bg: var(--white);
+  --searchbar-fg: var(--ink);
+  --searchbar-shadow-color: #ded9cc;
+  --searchresults-header-fg: var(--muted);
+  --searchresults-border-color: var(--line);
+  --searchresults-li-bg: var(--paper-deep);
+  --search-mark-bg: #edc5b3;
+  --footnote-highlight: #edc5b3;
+  --overlay-bg: rgba(37, 40, 36, 0.2);
+  --copy-button-filter: invert(40%);
+  --copy-button-filter-hover: invert(26%) sepia(36%) saturate(1612%) hue-rotate(334deg);
+  --blockquote-note-color: var(--accent-dark);
+  --blockquote-tip-color: #4d633e;
+  --blockquote-important-color: var(--accent-dark);
+  --blockquote-warning-color: #8c5d21;
+  --blockquote-caution-color: #a33c2b;
+  --diagram-node-bg: var(--white);
+  --diagram-border: var(--accent);
+  --color-scheme: light;
 }
 
-/* Keep the custom header above mdBook's overlapping menu/hover placeholder. */
-.page {
-  margin-block-start: 0;
+/* Manual dark themes keep the site's warm charcoal and peach palette. */
+html.navy, html.coal, html.ayu {
+  --bg: var(--code-bg);
+  --fg: var(--code-fg);
+  --sidebar-bg: #222520;
+  --sidebar-fg: #e5e3d9;
+  --sidebar-non-existant: var(--code-muted);
+  --sidebar-active: #e8aa90;
+  --sidebar-spacer: #4c5146;
+  --sidebar-header-border-color: #b97b60;
+  --scrollbar: #727769;
+  --icons: var(--code-muted);
+  --icons-hover: #f5c4af;
+  --links: #e8aa90;
+  --inline-code-color: #f5c4af;
+  --theme-popup-bg: #30342e;
+  --theme-popup-border: #5d6158;
+  --theme-hover: #393e35;
+  --quote-bg: #33382f;
+  --quote-border: #b97b60;
+  --warning-border: #e8aa90;
+  --table-border-color: #4c5146;
+  --table-header-bg: #393e35;
+  --table-alternate-bg: #2e322b;
+  --searchbar-border-color: #727769;
+  --searchbar-bg: #222520;
+  --searchbar-fg: var(--code-fg);
+  --searchbar-shadow-color: #171a15;
+  --searchresults-header-fg: var(--code-muted);
+  --searchresults-border-color: #5d6158;
+  --searchresults-li-bg: #393e35;
+  --search-mark-bg: #80513d;
+  --footnote-highlight: #80513d;
+  --overlay-bg: rgba(20, 23, 18, 0.5);
+  --copy-button-filter: invert(78%);
+  --copy-button-filter-hover: invert(85%) sepia(24%) saturate(590%) hue-rotate(319deg);
+  --blockquote-note-color: #e8aa90;
+  --blockquote-tip-color: #c7d4b0;
+  --blockquote-important-color: #e8aa90;
+  --blockquote-warning-color: #e8c789;
+  --blockquote-caution-color: #f0a491;
+  --diagram-node-bg: #393e35;
+  --diagram-border: #e8aa90;
+  --color-scheme: dark;
 }
 
-#mdbook-menu-bar-hover-placeholder {
-  margin-block-end: calc(0px - var(--menu-bar-height));
+body, button, input {
+  font-family: var(--font-body);
 }
+
+body {
+  line-height: 1.65;
+}
+
+/* Preserve mdBook's menu overlap without moving the website header offscreen. */
+.page { margin-block-start: 0; }
+#mdbook-menu-bar-hover-placeholder { margin-block-end: calc(0px - var(--menu-bar-height)); }
+
+.book-site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.2rem 3.2rem;
+  min-height: 84px;
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--table-border-color);
+}
+
+.book-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.15rem;
+  color: var(--fg);
+  font-size: 1.92rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.book-wordmark-mark {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 31px;
+  height: 31px;
+  border: 2px solid var(--links);
+  color: var(--links);
+  font-family: var(--font-heading);
+  font-size: 1.68rem;
+  line-height: 1;
+  letter-spacing: -0.2em;
+  padding-right: 0.18em;
+}
+
+.book-wordmark-mark span { font-size: 0.68em; align-self: end; margin-bottom: 0.25em; }
 
 .site-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 2rem;
   align-items: center;
-  padding: 1.2rem 2rem 0;
-  border-bottom: 1px solid var(--table-border-color);
-  font-size: 1.4rem;
+  gap: 0.5rem 2.4rem;
+  margin-left: auto;
+  font-size: 1.33rem;
+  font-weight: 700;
 }
 
-.site-tabs a {
-  padding: 0.8rem 0;
-  color: var(--fg);
-  text-decoration: none;
+.site-tabs a { padding: 1rem 0; color: var(--fg); text-decoration: none; }
+.site-tabs a[aria-current] { color: var(--links); border-bottom: 2px solid currentColor; }
+.site-tabs a:hover, .book-wordmark:hover { color: var(--links); }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--links); outline-offset: 4px; }
+
+.book-skip-link { position: absolute; left: 2rem; top: -10rem; z-index: 110; padding: 1rem; background: var(--fg); color: var(--bg); }
+.book-skip-link:focus { top: 1rem; }
+
+.menu-title {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--icons);
 }
 
-.site-tabs a[aria-current] {
-  color: var(--links);
-  border-bottom: 3px solid currentColor;
-  font-weight: bold;
+#mdbook-menu-bar { border-bottom-color: var(--table-border-color); }
+#mdbook-sidebar { border-right: 1px solid var(--sidebar-spacer); }
+#mdbook-sidebar .sidebar-scrollbox { padding: 1.8rem 1.5rem; }
+.chapter { font-size: 1.35rem; line-height: 1.7; }
+.chapter li { padding: 0.25rem 0; }
+.chapter li.part-title { margin: 2.2rem 0 0.8rem; color: var(--sidebar-active); font-family: var(--font-mono); font-size: 1.08rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.chapter a.active { font-weight: 700; }
+.chapter a:hover { color: var(--sidebar-active); }
+.chapter .section { margin: 0.5rem 0 0.8rem; font-size: 1.25rem; line-height: 1.6; }
+
+.content { padding-top: 1.2rem; }
+.content main { font-size: 1.65rem; }
+.content p, .content li { line-height: 1.7; }
+.content h1, .content h2, .content h3 { font-family: var(--font-heading); font-weight: 400; letter-spacing: -0.035em; line-height: 1.15; }
+.content h1 { margin: 2.4rem 0 3rem; font-size: clamp(3.6rem, 4vw, 5.2rem); letter-spacing: -0.05em; }
+.content h2 { margin-top: 4rem; font-size: 3rem; }
+.content h3 { margin-top: 3rem; font-size: 2.35rem; }
+.content h4 { font-size: 1.7rem; }
+.content a:not(.header) { text-decoration: underline; text-underline-offset: 3px; }
+.content a:not(.header):hover { text-decoration-thickness: 2px; }
+
+.content table { width: 100%; font-size: 1.45rem; line-height: 1.55; }
+.content table th, .content table td { padding: 1rem 1.2rem; text-align: left; }
+.content table thead tr { border-color: var(--table-border-color); }
+.content table th { border-bottom: 2px solid var(--sidebar-header-border-color); }
+.content blockquote { padding: 0.8rem 2rem; border-block: 0; border-left: 3px solid var(--quote-border); }
+.content :not(pre) > code { padding: 0.1em 0.3em; background: var(--quote-bg); color: var(--inline-code-color); }
+
+/* Use the same charcoal code panels as the website's technical examples. */
+.content pre { margin: 2rem 0; }
+.content pre > code, .content pre > code.hljs { padding: 1.6rem 1.8rem; background: var(--code-bg); color: var(--code-fg); border: 1px solid var(--code-line); line-height: 1.65; }
+.content pre .hljs-comment, .content pre .hljs-quote { color: var(--code-muted); font-style: italic; }
+.content pre .hljs-keyword, .content pre .hljs-selector-tag, .content pre .hljs-literal, .content pre .hljs-name, .content pre .hljs-tag { color: var(--code-accent); }
+.content pre .hljs-string, .content pre .hljs-regexp, .content pre .hljs-addition { color: var(--code-string); }
+.content pre .hljs-number, .content pre .hljs-symbol, .content pre .hljs-bullet { color: var(--code-number); }
+.content pre .hljs-title, .content pre .hljs-section, .content pre .hljs-type, .content pre .hljs-built_in { color: #e7d2ad; }
+.content pre .hljs-attr, .content pre .hljs-attribute, .content pre .hljs-variable, .content pre .hljs-template-variable, .content pre .hljs-params { color: #ead7c8; }
+.content pre .hljs-meta, .content pre .hljs-meta .hljs-keyword, .content pre .hljs-meta .hljs-string { color: var(--code-muted); }
+.content pre .hljs-deletion { color: #f0a491; }
+.content pre .hljs-addition, .content pre .hljs-deletion { background: transparent; }
+.content pre a { color: #f5c4af; }
+.content pre .buttons { --copy-button-filter: invert(78%); --copy-button-filter-hover: invert(85%) sepia(24%) saturate(590%) hue-rotate(319deg); }
+.content pre .buttons button { color: var(--code-fg); background: var(--code-bg); border-color: var(--code-line); }
+.content pre .buttons button:focus-visible { outline-color: var(--code-accent); }
+
+mark, .searchresults mark { color: var(--fg); background: var(--search-mark-bg); }
+#mdbook-searchbar { font-size: 1.6rem; border-radius: 0; }
+.searchresults-header { font-family: var(--font-mono); font-size: 1.25rem; }
+
+main .mermaid { margin: 2.5rem 0; padding: 1.5rem; overflow-x: auto; text-align: center; background: var(--quote-bg); border: 1px solid var(--table-border-color); }
+main .mermaid svg { height: auto; }
+
+@media (max-width: 700px) {
+  .book-site-header { gap: 0.8rem; padding: 1.4rem 1rem 0.6rem; }
+  .book-wordmark { font-size: 1.75rem; }
+  .site-tabs { width: 100%; margin-left: 0; justify-content: space-between; gap: 1rem; }
+  .content h1 { font-size: 3.6rem; }
+  .content h2 { font-size: 2.7rem; }
+  main .mermaid { padding: 0.6rem; }
 }
 
-.site-tabs a:hover {
-  color: var(--links);
-}
-
-.site-tabs a:focus-visible {
-  outline: 2px solid var(--links);
-  outline-offset: 4px;
-}
-
-main .mermaid {
-  margin: 2rem 0;
-  overflow-x: auto;
-  text-align: center;
-}
-
-main .mermaid svg {
-  height: auto;
+@media print {
+  .book-site-header, .book-skip-link { display: none; }
 }

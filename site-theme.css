@@ -1,0 +1,21 @@
+/* Shared BoardRunner palette and type. Used by the website and the book. */
+:root {
+  --paper: #f4f1e9;
+  --paper-deep: #ece8dd;
+  --ink: #252824;
+  --muted: #60645d;
+  --line: #c8c6ba;
+  --accent: #a6492d;
+  --accent-dark: #87391f;
+  --white: #fbfaf5;
+  --code-bg: #282b27;
+  --code-fg: #f3f0e6;
+  --code-line: #5d6158;
+  --code-muted: #b9bdb3;
+  --code-accent: #efb39a;
+  --code-string: #c7d4b0;
+  --code-number: #e8c789;
+  --font-body: "Trebuchet MS", Arial, sans-serif;
+  --font-heading: Georgia, "Times New Roman", serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}

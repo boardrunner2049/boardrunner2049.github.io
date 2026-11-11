@@ -14,13 +14,13 @@ command = "mdbook-mermaid"
 
 [output.html]
 default-theme = "light"
-preferred-dark-theme = "navy"
+preferred-dark-theme = "light"
 smart-punctuation = false
 site-url = "/fastdyn/"
 git-repository-url = "https://github.com/boardrunner2049/boardrunner2049.github.io"
 edit-url-template = "https://github.com/boardrunner2049/boardrunner2049.github.io/edit/main/fastdyn/{path}"
-additional-css = ["theme/fastdyn.css"]
-additional-js = ["mermaid.min.js", "mermaid-init.js"]
+additional-css = ["theme/site-theme.css", "theme/fastdyn.css"]
+additional-js = ["mermaid.min.js", "theme/mermaid-init.js"]
 
 [output.html.search]
 enable = true
