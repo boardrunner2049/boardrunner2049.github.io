@@ -41,7 +41,47 @@ During normal FastDyn preparation, use `RunContext.analysis` or `VirtualContext.
 | `resolve_address(token, symbols)` | Numeric values and `symbol+/-offset` | Shared address-expression primitive |
 | `RTOS_SIGNATURES`, `RTOS_HINT_MARKERS`, `identify_rtos()` | Shared markers and strong-signature detection | Reusable evidence with separate consumer thresholds |
 
-`LoopFinder`, `next_pcs`, and `mmiofinder` retain their existing APIs. They are specialized analyses, not aliases for a universal analysis service or an automatic MMIO optimizer.
+At the core `f9666d7` baseline, `LoopFinder`, `next_pcs`, and `mmiofinder` retain their specialized APIs. The later constant-propagation addition below changes where `mmiofinder` obtains its candidates.
+
+## Addition at `a38af40`: known-address candidates
+
+FastDyn [`a38af408451394ea2f41be1e9cf1e96bc46c370f`](https://github.com/boardrunner2049/FastDyn/commit/a38af408451394ea2f41be1e9cf1e96bc46c370f) adds `analysis.constant_propagation.memory_accesses()`. It returns a cached tuple of immutable `KnownMemoryAccess` records. Use a checkout and Python environment containing that revision for this example; the core installation walkthrough's `f9666d7` snapshot predates this property.
+
+```python
+from fastdyn.host import AnalysisSession
+
+with AnalysisSession.open(
+    "tests/binaries/rtos/zephyr.elf",
+    architecture="arm",
+    instruction_mode="thumb-mclass",
+) as analysis:
+    for access in analysis.constant_propagation.memory_accesses()[:10]:
+        print(
+            hex(access.pc),
+            hex(access.address),
+            access.direction,
+            access.transfer_size,
+            access.instruction_size,
+        )
+```
+
+Run from the FastDyn repository root. This prints up to ten recovered candidates; the addresses and count depend on the image. No result means that the pass recovered no candidate, not that the firmware performs no memory accesses.
+
+| Record field | Meaning |
+| --- | --- |
+| `pc` | Address of the decoded instruction |
+| `instruction_size` | Encoded instruction length in bytes |
+| `transfer_size` | Memory transfer width in bytes |
+| `direction` | `read` or `write` |
+| `arch`, `instruction` | Architecture label and decoded instruction text |
+| `base_register`, `address` | Base-register name and recovered effective address |
+| `note` | Analysis detail, such as the displacement |
+
+The compatibility property `size` means `instruction_size`, not transfer width. Keeping those dimensions separate matters for a two-byte Thumb instruction that performs a four-byte load.
+
+The service does not decide whether an address is MMIO. At this revision, `binary.mmiofinder.find_mmio_accesses()` filters the shared analysis by supplied address ranges, and the experimental [automatic MMIO plugin](../designs/automatic-mmio.md) uses the same facts through `ctx.analysis` before applying its own device policy.
+
+Treat these addresses as **candidates, not formal proofs**. The reviewed pass has limitations in control-flow merging, instruction propagation, and discovery across executable sections. It can retain an incorrect candidate or miss an access. A consumer must validate the instruction and any assumptions required by its action; a missing candidate does not establish that a memory region is unused. The automatic MMIO chapter explains the runtime guards and the remaining equivalence limits of that particular consumer.
 
 ## Symbols: distinguish code from data
 
@@ -124,3 +164,5 @@ Public analysis errors derive from `HostAnalysisError`, including `ImageAddressE
 - [Image, symbol, DWARF, and failure contracts](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/docs/HostAnalysisAPI.md)
 - [Reusable versus specialized analysis inventory](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/docs/HostAnalysisMigration.md)
 - [Shared FMU metadata parser](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/fmu_metadata.py)
+- [`a38af40` constant propagation and `KnownMemoryAccess`](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/host/constants.py)
+- [`a38af40` shared-session integration](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/host/session.py)

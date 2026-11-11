@@ -44,7 +44,7 @@ Native plugins resolve their own artifact names through the runtime SDK. A plugi
 
 QEMU translates guest instructions into host-executable code in translation blocks. FastDyn's block-translation callback inspects the guest instruction addresses in a block and installs the configured instrumentation at matching PCs.
 
-There are two principal execution mechanisms:
+Virtual instructions and modifiers use two common execution mechanisms:
 
 | Mechanism | Installed during translation | Action when the guest reaches the PC |
 | --- | --- | --- |
@@ -55,15 +55,19 @@ The translation callback prepares instrumentation; it does not execute a firmwar
 
 The native core registers instrumentation in the following order within its instruction loop: coverage/register logging, a virtual callback, specialized inline I/O, modifiers, and legacy detours. This describes the current implementation's registration order. It is not a substitute for checking the semantics of overlapping interventions, especially interventions that change control flow.
 
-## The existing inline-I/O foundation
+## Manual and automatic inline I/O
 
 FastDyn already contains a specialized path that associates a known guest PC with an inline I/O load or store. `[Machine].finline` selects a user-supplied access-map file; the frontend forwards that path to the native parser. Each parsed record contains a PC, read/write direction, device name, offset, and register. The translation callback then installs `QEMU_PLUGIN_INLINE_LOAD_IO` or `QEMU_PLUGIN_INLINE_STORE_IO`.
 
-The current implementation addresses a global `gpio_memory[0x400]` buffer. The record's device name is parsed but does not choose a separate device backing block in this path. An inline hook executes before the original instruction; replacing an MMIO operation also requires a separately validated control-flow action that suppresses that original access. The [inline device modeling chapter](../advanced/inline-device-modeling.md) explains the exact backend semantics and a manual workflow. General automatic analysis of arbitrary device models and installation of safe fast paths remain the subject of the [automatic MMIO design](../designs/automatic-mmio.md).
+This manual implementation addresses a global `gpio_memory[0x400]` buffer. The record's device name is parsed but does not choose a separate device backing block in this path. An inline hook executes before the original instruction; replacing an MMIO operation also requires a separately validated control-flow action that suppresses that original access. The [inline device modeling chapter](../advanced/inline-device-modeling.md) explains the backend semantics and a manual lab pinned to `5b8bf3d`.
+
+Revision **`a38af408451394ea2f41be1e9cf1e96bc46c370f`** adds experimental automatic MMIO optimization through the `mmio_opt` run plugin. Model compilation produces a bounded operation descriptor, while host preparation discovers candidate firmware loads through shared constant propagation. The runtime reads that plan during plugin initialization and defers instance binding until after `dev_init`, before guest translation. It then registers typed replacements against each resolved elder instance's live allocation. This uses the public [post-device-init lifecycle and runtime SDK](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/include/fastdyn_runtime.h) and the [optimizer's native binder](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/virtuals/mmio_opt/runtime/mmio_opt.c).
+
+The patched Cortex-M translator emits the model expression as one arm of the original scalar load, with a live address guard and MPU fallback. It does not use the manual array or a PC-skipping modifier. The initial host gate requires a single Cortex-M CPU and disables substitution for its declared incompatible capabilities. [Automatic MMIO optimization](../designs/automatic-mmio.md) documents the workflow and experimental correctness limits; the [host gate](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/virtuals/mmio_opt/host/preprocessor.py) and [QEMU patch](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/patches/qemu-fastdyn-mmio.patch) define the implemented scope.
 
 ## Runtime models and observations
 
-During execution, device dispatch handles the configured peripheral accesses. Runtime plugins may observe MMIO after dispatch, react to guest IRQ events, inspect translated blocks, or install prepared PC callbacks. Physics integration exchanges actuator commands and simulated state through its selected backend. These interfaces allow a model, a tracer, and an experiment controller to coexist while retaining distinct responsibilities.
+During ordinary peripheral execution, device dispatch handles the configured accesses. Runtime plugins may observe MMIO after dispatch, react to guest IRQ events, inspect translated blocks, or install prepared PC callbacks. An optimized access that bypasses dispatch has a different observation boundary, covered in the automatic-MMIO chapter. Physics integration exchanges actuator commands and simulated state through its selected backend. These interfaces allow a model, a tracer, and an experiment controller to coexist while retaining distinct responsibilities.
 
 Results remain in the work directory. Some artifacts, such as Introspection's activity log, are updated during execution. Others, such as Function Counter's final sorted totals, depend on normal shutdown callbacks. Stop a run cleanly when its result contract includes exit-time output.
 

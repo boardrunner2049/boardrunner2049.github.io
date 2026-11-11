@@ -1,6 +1,6 @@
 # Source map and documentation index
 
-The core chapters and original documentation index below retain the FastDyn baseline **`f9666d7f518c373e89831d8e14a6371a27fe6436`**. The Advanced section was reviewed at **`5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`**, with separate backend/frontend pins where required. Links identify the recorded revision so a later change to `main` does not silently change the evidence behind an explanation.
+The core chapters and original documentation index below retain the FastDyn baseline **`f9666d7f518c373e89831d8e14a6371a27fe6436`**. The JIT patcher and manual inline lab use **`5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`**. Automatic MMIO and related API additions were reviewed at **`a38af408451394ea2f41be1e9cf1e96bc46c370f`**, with separate backend/frontend pins for Supercache. Links identify the recorded revision so a later change to `main` does not silently change the evidence behind an explanation.
 
 The book organizes the material by reader workflow and system boundary. The original pages, target-specific notes, and example assets remain useful for detailed port work. A mapping below identifies the new chapter that explains the topic; it does not mean every historical command or measured result has been repeated or revalidated.
 
@@ -18,6 +18,8 @@ FastDyn's submodules have their own revisions. The top-level revision pins their
 | --- | --- |
 | [Supercache](../advanced/supercache.md) | Separately pinned QEMU Supercache implementation and PX4 frontend cache-management code. The chapter distinguishes these from main's older QEMU gitlink. |
 | [Inline device modeling](../advanced/inline-device-modeling.md) | Main `5b8bf3d` access-map preparation, native `LOAD_IO`/`STORE_IO` registration, GPIO backing state, and the pinned QEMU lowering. This is the existing manual mechanism. |
+| [Automatic MMIO optimization](../designs/automatic-mmio.md) | At `a38af40`: [AutomaticMMIOOptimization.md](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/docs/AutomaticMMIOOptimization.md), [model extractor](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/mmio_model.py), [native binding](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/virtuals/mmio_opt/runtime/mmio_opt.c), and [QEMU replacement patch](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/patches/qemu-fastdyn-mmio.patch). The chapter records the experimental workflow and reviewed correctness limits. |
+| [Shared access discovery](../extending/host-analysis.md) | The `a38af40` [constant-propagation service](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/host/constants.py), [session integration](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/host/session.py), and MMIO compatibility adapter. Plugins filter shared candidates and own their installation policy. |
 | [JIT patcher](../advanced/jit-patcher.md) | [GuestInstructionFragments.md](https://github.com/boardrunner2049/FastDyn/blob/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c/docs/GuestInstructionFragments.md), native SDK, tracked QEMU patch, and shipped plugin/probes at `5b8bf3d`. |
 | [Translation insertion design](../designs/translation-insertion.md) | Implemented address, lifecycle, admission, and observation contracts for guest instruction fragments; retained at its original URL. |
 
@@ -25,7 +27,7 @@ The source guides in these chapters pin the exact files used. The review does no
 
 ## Earlier pages in `docs/`
 
-All 31 Markdown pages present in the original `f9666d7` snapshot's `docs/` directory are indexed here. The newer guest-fragment documentation is mapped in the Advanced table above.
+All 31 Markdown pages present in the original `f9666d7` snapshot's `docs/` directory are indexed here. The newer guest-fragment and automatic-MMIO documentation is mapped in the Advanced table above.
 
 | Original source | New book chapter | Material to retain |
 | --- | --- | --- |

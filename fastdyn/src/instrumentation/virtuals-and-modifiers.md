@@ -107,7 +107,7 @@ Modifiers may coexist with a virtual, but overlapping updates need deliberate se
 
 For an unexpected result, inspect `virtuals/virtuals.txt` and `virtuals/modifiers.txt` in the work directory, confirm the instruction is reached, and check the architecture-specific register mapping. An instruction may overwrite a value you assigned immediately before it; select the hook location according to the intended data flow.
 
-## Specialized inline I/O
+## Legacy manual inline I/O
 
 `[Machine].finline` accepts a user-supplied static access-map file. The frontend forwards its path to the native parser; this path consumes an already prepared table and does not itself run the MMIO discovery helper. A schematic record is:
 
@@ -117,7 +117,13 @@ For an unexpected result, inspect `virtuals/virtuals.txt` and `virtuals/modifier
 
 The five fields are hexadecimal PC, direction, device label, hexadecimal offset, and hexadecimal register slot. Direction accepts `R`/`READ` and `W`/`WRITE`, case-insensitively. The first matching record for a PC is used. The table has no transaction-width field; admitted register and access semantics belong to the patched backend.
 
-The present translation path uses the offset into a single 1 KiB `gpio_memory` buffer and does not select a backing region from the device label. Keep every access within that buffer: the native table reader does not bounds-check the offset. The hook runs before the original instruction; it does not suppress that instruction by itself. The [inline device modeling chapter](../advanced/inline-device-modeling.md) explains the backend's transfer width, an explicit same-site PC modifier for skipping the original MMIO, and the required control-flow checks. See [automatic MMIO optimization](../designs/automatic-mmio.md) for the planned model analyzer.
+This manual translation path uses the offset into a single 1 KiB `gpio_memory` buffer and does not select a backing region from the device label. Keep every access within that buffer: the native table reader does not bounds-check the offset. The hook runs before the original instruction; it does not suppress that instruction by itself. The [inline device modeling chapter](../advanced/inline-device-modeling.md) explains the backend's transfer width, an explicit same-site PC modifier for skipping the original MMIO, and the required control-flow checks in a lab pinned to `5b8bf3d`.
+
+## Experimental automatic MMIO
+
+Revision **`a38af408451394ea2f41be1e9cf1e96bc46c370f`** adds the `mmio_opt` run plugin. It combines model-operation metadata with discovered Cortex-M Thumb access sites, binds reads to initialized elder instances, and registers guarded replacements through the native runtime SDK. The [runtime module](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/virtuals/mmio_opt/runtime/mmio_opt.c) and [QEMU patch](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/patches/qemu-fastdyn-mmio.patch) implement this separate path.
+
+A successful fast arm replaces the original scalar read directly; it needs no manual PC-skipping modifier. The [host compatibility gate](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/virtuals/mmio_opt/host/preprocessor.py) disables automatic substitution when `finline` is active. Use [Automatic MMIO optimization](../designs/automatic-mmio.md) for configuration, the shipped demonstration, and the experimental limits that must be checked before treating a replacement as equivalent.
 
 ## Source guide
 

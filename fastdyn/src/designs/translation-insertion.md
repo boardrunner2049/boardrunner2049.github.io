@@ -55,7 +55,7 @@ An exception retry that reaches the anchor again runs its fragments again. The c
 
 The implemented subset excludes guest-memory operations, branches and other guest control transfers, privileged operations, floating point, and vectors. It also excludes live replacement/removal, automatic register preservation, host-state bindings, and a public TCG/IR interface. A plugin that needs those behaviors must use another supported mechanism or extend the implementation and its tests first.
 
-This distinction matters for [automatic MMIO optimization](automatic-mmio.md): register-only guest fragments do not by themselves implement shared device-state access or prove a peripheral read is safe to replace. The [existing inline device path](../advanced/inline-device-modeling.md) has its own operation and backing-state contract.
+This distinction matters for [automatic MMIO optimization](automatic-mmio.md). Implemented experimentally at [`a38af40`](https://github.com/boardrunner2049/FastDyn/commit/a38af408451394ea2f41be1e9cf1e96bc46c370f), that pipeline uses a separate typed load-replacement API and binds directly to initialized elder state. Register-only guest fragments do not supply that state access or prove that a peripheral read is safe to replace. The [inline device chapter](../advanced/inline-device-modeling.md) compares the automatic pipeline with the older manual `finline` mechanism.
 
 ## Source guide
 

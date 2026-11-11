@@ -21,6 +21,7 @@ Answer all four before moving a configuration between architectures. A register-
 | Function entry tracing | ARM32, AArch64, RV64, System V AMD64 layouts | The tracer has explicit entry-argument layouts rather than one universal register scheme |
 | Shared instruction decoder | ARM with `thumb-mclass` | Unsupported combinations raise a target error |
 | VariableWatch and ObjectSan planning | Current shared Thumb/M-profile analysis | These plugins do not become portable solely by changing `arch` |
+| Experimental automatic MMIO at `a38af40` | Single-CPU Cortex-M Thumb with little-endian scalar loads | Requires its matching QEMU patch and audited model; see [automatic MMIO](../designs/automatic-mmio.md) for eligibility and correctness limits |
 | RTOS introspection | Six adapters with different discovery and runtime behavior | Use the adapter-specific contract and demonstrated fixture, not a blanket architecture claim |
 | Device and interrupt infrastructure | Several current windows and IRQ paths are M-profile-specific | Review these paths when adapting a different machine |
 

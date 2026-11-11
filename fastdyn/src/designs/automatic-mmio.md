@@ -1,104 +1,184 @@
-# Automatically accelerate MMIO
+# Automatic MMIO optimization
 
-**Status: proposed automation.** FastDyn already has device dispatch, a hardcoded-MMIO discovery helper, and a specialized `finline` path. The missing general capability is a tool that analyzes a device model, finds eligible firmware accesses, and installs correct fast paths automatically.
+**Status: implemented experimental workflow at FastDyn [`a38af40`](https://github.com/boardrunner2049/FastDyn/commit/a38af408451394ea2f41be1e9cf1e96bc46c370f).** FastDyn can extract read expressions from an ordinary elder model, discover matching firmware loads, bind them to the initialized device instance, and emit guarded replacements. The shipped echo-model demonstration exercises this complete path. The current extractor has correctness gaps, so an accepted operation is not a proof of equivalence for arbitrary model code; use explicitly audited models and the validation boundaries below.
 
-The goal is to keep simple operations in translated execution while preserving the model's full behavior for operations that need it. A status read might be a load from shared device state. A transmit command might need a queue, a callback, an interrupt, or external I/O and therefore remain on the ordinary dispatch path.
+The workflow needs neither a hand-written PC list nor a second register description. Model compilation produces operation metadata; run preparation finds candidate accesses; native initialization binds those candidates to the model's existing state. Guest loads with an admitted replacement can read that live state directly, while other operations retain ordinary device dispatch.
 
-## Analyze behavior, not just register names
+This is a separate mechanism from the manual [inline device modeling](../advanced/inline-device-modeling.md) access map and the [JIT patcher](../advanced/jit-patcher.md). Automatic MMIO replaces a load inside the decoder's instruction implementation. It does not insert an extra guest instruction or require a PC modifier to skip the original access.
 
-Calling a register `STATUS` does not make its reads pure. It might clear a pending bit, consume a FIFO entry, sample a timer, or acknowledge an interrupt. The optimizer must reason about the actual model implementation and all relevant helper calls.
+## Build the matching revision
 
-A practical design analyzes a model's compiled intermediate representation together with the model ABI and configuration. It summarizes a read or write by access width, offset, value computation, memory effects, possible callbacks, and externally visible effects. It may use annotations to describe an external helper, but the normal workflow should not require an author to manually enumerate every fast register.
+The [installation chapter](../getting-started/installation.md) supplies the Ubuntu 24.04 build prerequisites. Its core walkthrough uses an older source snapshot, so select this feature's revision explicitly. Also provide **Clang 18 or a compatible `clang`**, GNU Arm Embedded assembler/linker tools (`arm-none-eabi-as`, `arm-none-eabi-ld`), and the normal GLib development headers and `pkg-config`. Setup installs the Python dependencies used for firmware decoding and ELF analysis.
 
-| Model behavior | Candidate action |
-| --- | --- |
-| Read a stable field from shared state | Inline a load when coherence and width are established |
-| Return a constant with no side effects | Inline a constant result |
-| Write a field with a fully representable effect | Inline only the complete admitted effect |
-| Read-to-clear or FIFO pop | Retain dispatch unless all effects are represented explicitly |
-| Transmit, raise an IRQ, schedule an event, or call unknown code | Retain ordinary dispatch |
-| Address or model aliasing cannot be resolved | Retain ordinary dispatch |
+For a separate checkout:
 
-An unsupported case is a successful conservative outcome: the experiment still runs through the original model.
+```bash
+git clone https://github.com/boardrunner2049/FastDyn.git FastDyn-mmio
+cd FastDyn-mmio
+git checkout --detach a38af408451394ea2f41be1e9cf1e96bc46c370f
+git submodule update --init --depth 1 third_party/common/qemu
+source ./setup.sh --build-qemu \
+  --qemu-root "$PWD/third_party/common/qemu" --skip-optifuzz
+```
 
-## Use the same state on both paths
+Run the remaining commands from this **FastDyn repository root**. An existing checkout at the same revision is also suitable. Setup builds `qemu-system-arm` and `build/libfastdyn.so` with device-model support. Its ordered QEMU patch series is:
 
-The fast path and the device model should agree on one canonical backing representation. A separate mirror that is updated only sometimes can return plausible but stale values. The generated adapter should identify the shared field or backing block, its width and endianness, and every writer that can update it.
+1. `qemu-fastdyn-plugin-icount.patch`.
+2. `qemu-fastdyn-insn-fragments.patch`.
+3. `qemu-fastdyn-mmio.patch`.
 
-A slow operation may change several fields that later fast reads observe. An interrupt callback, a physics update, or another host thread may also be a writer. The shared-state contract must preserve ordering and atomicity for those participants; a raw pointer or `volatile` qualifier alone is not a complete concurrency protocol.
+The setup script detects an already applied prefix and applies the remaining patches. It rejects an incompatible checkout instead of resetting it. Use matching QEMU headers, executable, plugin, and model library; the runtime SDK now includes the required `qemu/fastdyn-mmio.h` ABI.
 
-Do not assume that the guest MMIO address can be used as a host pointer. Bind guest regions to model-instance state explicitly, and include the instance in the optimization identity. Two devices with the same register layout can still hold different values.
+## Start with the shipped demonstration
 
-## Discover the firmware sites automatically
+```bash
+FASTDYN_KEEP_TEST_TMP=1 tests/integration/run_fastdyn_mmio_opt.sh
+```
 
-After deriving model summaries, analyze the firmware for loads and stores that can reach the configured device ranges. Recover constants, address construction, access widths, and relevant control flow. Connect those candidate accesses to a particular modeled offset and admissible model operation.
+The runner prints the temporary artifact directory, assembles a Cortex-M4 Thumb fixture, builds the unmodified `tests/models/elder_echo.c` with MMIO metadata, and creates complete optimized and baseline configurations. It runs both, checks their firmware success markers, validates the optimized installation report, and prints fresh timing measurements. Keeping the temporary directory lets you inspect its generated models, configurations, logs, and work directories.
 
-The current `find_mmio_accesses()` helper is useful evidence of an existing discovery mechanism. Its current ARM32/ARM64 scan is a lightweight heuristic, not a whole-program proof of an address. Its `MMIOAccess.size` records the **instruction encoding size**, which must not be mistaken for the memory transaction width.
+Expected success markers include:
 
-A general optimizer needs to handle both proven and conditional matches:
+```text
+PASS automatic MMIO substitution
+PASS generated operations, guarded substitution, live state, IRQ polling, widths, MPU/guard fallback, retranslation, and slow path
+```
 
-- A site with an established fixed effective address may admit an unconditional specialized operation.
-- A site whose effective address varies may use a runtime guard and fall back when the address or mode does not match.
-- A site with insufficient evidence remains on normal dispatch.
+These are the runner's expected assertions, not a claim that this handbook update executed the firmware test. The fixture checks ordinary writes updating later fast reads, byte and halfword transfer widths, an IRQ callback advancing a polled field, a constant register, an unsupported offset, a PC used for both MMIO and RAM, enabled-MPU fallback, and translation-block invalidation. Its final loop performs one million reads.
 
-Unknown indirect accesses should not be installed as unconditional fast operations merely because one trace happened to visit a particular register.
+The script assembles and links an ELF; it does not strip that ELF. The discovery service is designed to recover addresses without symbols, but that broader property should be distinguished from the particular image produced by this runner.
 
-Each guest access must perform exactly one modeled operation. An admitted fast path replaces or suppresses the original MMIO access; a guard chooses either the fast operation or ordinary dispatch. Inserting a fast operation before an unchanged original access would duplicate effects. Both routes must also preserve instruction effects such as base-register writeback, not only the loaded value or store width.
+The default executables are `third_party/common/qemu/build/qemu-system-arm`, `build/libfastdyn.so`, and `fastdyn-env/bin/fastdyn`. Override them with `FASTDYN_QEMU_BIN`, `FASTDYN_PLUGIN_LIB`, and `FASTDYN_BIN`. Without `FASTDYN_KEEP_TEST_TMP=1`, the runner deletes its temporary directory on exit.
 
-## The proposed pipeline
+## Build and configure your model
+
+The public model-build command enables extraction explicitly:
+
+```bash
+fastdyn build-model --mmio-opt --no-vio \
+  tests/models/elder_echo.c -o out/mmio-models --json
+```
+
+This produces `out/mmio-models/elder_echo.so` and `elder_echo.mmio.json`. The shared library retains its normal `fastdyn_model` descriptor and includes a generated `fastdyn_mmio_model` table. The JSON file is an inspection report; the runtime reads the embedded table, so copying a JSON file beside an ordinary library does not enable optimization.
+
+`--mmio-opt` selects `clang-18` when available, otherwise `clang`, rather than the ordinary `CC` selection. The analyzer compiles host LLVM IR with `-O1` and uses that host layout to derive state offsets. Build the analysis and library for the same host ABI. `--no-vio` avoids the optional LibVIO dependency for this echo example; it is not the optimization switch. `--json` prints the build result, including each model's `mmio_operations` count.
+
+The current extractor requires **one C source file per model**. A directory can still contain several independent models, but combining several sources into one model with `--name` is unsupported for this pass. If no admissible operation is found, the requested optimized build fails and removes an older output library. To retain ordinary execution for such a model, build it without `--mmio-opt`.
+
+Extend an existing single-CPU Cortex-M configuration with the following settings. Replace the absolute library path with the output you just built; this fragment supplies device/plugin settings, not a complete machine configuration:
+
+```toml
+[CPU.cpu0.plugins.mmio_opt]
+enabled = true
+
+[Device.Models.elder]
+
+[Device.echo]
+ranges = [["0x40010000", "0x400100ff"]]
+irq = [16]
+reset = 287454020
+
+[[Device.echo.handlers]]
+model = "elder"
+enabled = true
+scroll = "/absolute/path/to/out/mmio-models/elder_echo.so"
+```
+
+The plugin currently consumes only its `enabled` setting. It obtains device ranges and the firmware analysis session from the ordinary run context; there are no user-facing PC, register, or expression lists to maintain. Keep `[Machine].finline = "None"` for this workflow. The complete smoke configuration uses `arch = "arm"`, `machine = "cortexm"`, `cpu = "cortex-m4"`, `coverage = false`, and `twintrace = "None"`.
+
+For a comparison, create a second configuration with `mmio_opt.enabled = false`, use a separate work directory, and keep the firmware, compiled model, initial state, and execution policy fixed. Disabling the plugin leaves the same library usable through its ordinary elder callbacks.
+
+## From model source to a guarded load
 
 ```mermaid
 flowchart TD
-    A["Device model and configuration"] --> B["Summarize model effects"]
-    C["Firmware and machine description"] --> D["Find candidate MMIO sites"]
-    B --> E["Match state, address, and effects"]
+    A["Elder model source"] --> B["Extract read expressions"]
+    C["Firmware and device ranges"] --> D["Discover candidate loads"]
+    B --> E["Bind initialized model state"]
     D --> E
-    E --> F{"All required semantics known?"}
-    F -->|Yes| G["Install translated operation or guard"]
-    F -->|No| H["Keep device dispatch"]
-    G --> I["Validate against ordinary execution"]
+    E --> F{"Address matches and MPU disabled?"}
+    F -->|Yes| G["Evaluate live state expression"]
+    F -->|No| H["Execute original guest load"]
+    G --> I["Complete original instruction"]
     H --> I
 ```
 
-The output should include an inspectable plan: firmware digest, model digest, relevant configuration, architecture, guest PC, effective-address condition, access width, shared-state binding, generated operation, and reason for any fallback. Installation belongs in preparation or a controlled translation hook. The native engine executes the plan; it should not rerun compiler analysis for every access.
+The model pass starts from the constant `fastdyn_model` initializer. It resolves the initialization/read callbacks and attempts to establish the state allocation's size. Generated selectors identify an address from a constant, an initialized state field, or that field plus an offset. Expressions can return constants, load unsigned 8/16/32-bit state, and apply bounded add, subtract, bitwise, and shift operations. Each postfix expression has at most 16 operations. Models do not author this metadata table themselves.
 
-The API can stay architecture-neutral while target adapters recover instruction effects and emit the corresponding translation operation. A portable design cannot assume every store source is an ARM `rN` or every address is 32 bits.
+The firmware pass uses the shared, cached `ctx.analysis.constant_propagation` service for ELF inputs. It follows vector/ELF entry points and direct control flow and attempts bounded constant propagation through literal loads, `movw`/`movt`, register copies, and immediate arithmetic. The MMIO plugin filters the resulting address candidates against configured device ranges. It distinguishes the instruction's encoded length from the memory transfer width. Undiscovered sites use ordinary execution. The [host-analysis chapter](../extending/host-analysis.md) records the current limits of these candidates; the API's `KnownMemoryAccess` name does not establish a complete dataflow proof.
 
-## Preserve the complete experiment
+The native module loads its pending plan during plugin initialization and registers `virtual_register_post_device_init()` work. After `dev_init`, elder resolves each candidate against an initialized device and its `opaque` allocation. `virtual_register_mmio_replacement()` installs the typed descriptor and copied expression; the state pointer remains bound to the live allocation. Register before guest execution: load translation seals the registry, and normal TB invalidation does not discard it.
 
-Optimizing a model call can change more than its return value. Check these observable behaviors before admitting a replacement:
+At execution, the fast branch checks the actual effective address and the enabled MPU state. A matching load evaluates the expression from live model state. An address mismatch or enabled MPU runs the original QEMU load. The surrounding decoder retains destination placement, predication, writeback, PC advancement, and original instruction accounting. This preserves the existing instruction structure; the remaining fault-equivalence limitations are described below.
 
-| Concern | Requirement |
+## Supported scope and compatibility gates
+
+The automatic runtime path currently targets **little-endian Cortex-M Thumb scalar `LDR`, `LDRB`, and `LDRH`**, with 1-, 2-, or 4-byte transfers. It does not optimize writes. Signed loads, wider transfers, other guest architectures, and arbitrary device side effects are outside this workflow.
+
+| Condition | Current behavior |
 | --- | --- |
-| Register side effects | Preserve read-to-clear, write masks, and updates to related state |
-| Interrupts and deadlines | Preserve delivery conditions and guest-visible timing |
-| Access shape | Match width, alignment, endianness, and extension behavior |
-| Exceptions | Preserve the original permitted or rejected access behavior |
-| Observers and replay | Emit equivalent observations or disable the optimization for that mode |
-| State restoration | Restore the backing state and any related event/queue state consistently |
-| Reconfiguration | Bind the plan to the active model instance and configuration |
-| Code changes | Invalidate stale site bindings and translations |
+| More than one CPU | Preparation error: one serialized CPU is required |
+| Architecture other than `arm`, or machine other than `cortexm`/`cortexm7` | Preparation error |
+| No configured device ranges | Preparation error |
+| Coverage, edge coverage, fuzzing, manual `finline`, twintrace, hardware trace, or exact-budget capability enabled | Optimization disabled; `installation.json` records `disabled_reason`, and no pending plan is used |
+| A write, missing generated model metadata, unresolved instance, or unsupported expression | Site declined; original execution remains |
+| Admitted site with a different live address or enabled MPU | Guarded fallback to the original load |
 
-A polling loop must still permit the time and event progress on which its status change depends. Replacing the value source is different from collapsing the loop or skipping synchronization points.
+The capability names checked by the host plugin are exactly `coverage`, `edge_coverage`, `fuzzing`, `finline`, `twintrace`, `hardware_trace`, and `exact_budget`. This list is not a universal detection system for every custom observer or runtime extension.
 
-## What FastDyn already provides
+The current plan and replacement registries each hold up to 4096 records; the ARM load emitter considers up to 64 matching records for a PC and width. A successful registration does not prove that a site was reached or that its target load was emitted through the fast path. Check execution counters as well as installation status.
 
-The inspected main branch has a five-field `finline` access map and native `LOAD_IO`/`STORE_IO` registration. That path addresses a single `gpio_memory[0x400]` buffer; its parsed device label does not yet select arbitrary model state. The [inline device modeling chapter](../advanced/inline-device-modeling.md) documents that existing path and its setup in detail. It is a useful implementation foundation with a narrower contract than the proposed model analyzer.
+## Read the generated artifacts
 
-The existing modifier language also has restrictions, including the current absolute-memory path's M-profile address check. The general optimizer should therefore target an explicit admitted operation or adapter, rather than assume every MMIO replacement can be expressed by an unrestricted existing modifier.
+| Artifact | What it establishes |
+| --- | --- |
+| `<model>.mmio.json` beside the library | Read callback, claimed state size, operation count, declined-path count, selectors, and expression instructions produced by model analysis |
+| `run-artifacts/mmio_opt/discovery.json` | Firmware path, configured ranges, decoded access records, and discovery/plan preparation time |
+| `run-artifacts/mmio_opt/pending-plan.txt` | Model-independent rows: PC, address, transfer size, instruction size, and direction |
+| `run-artifacts/mmio_opt/installation.json` | Prepared and registered counts; per-site address, width, device, hook ID, installation reason, fast count, and guarded fallback count |
 
-## Validation before speed claims
+`installation.json` first contains a pending-device-initialization marker, is rewritten after binding, and is updated with counters by the exit callback. Stop normally when you need final counts. Its `installed` field means QEMU accepted a registration; `fast_count` establishes actual fast executions. `fallback_count` counts the emitted guarded slow branch, not every unoptimized access in the run. Where several records match one instruction and width, that branch is counted against the first matching record.
 
-Compare optimized and ordinary runs using the same firmware, model, initial state, input sequence, and timing policy. Compare returned values, device state transitions, interrupts, observations, and scenario outcomes. Include accesses that are deliberately ineligible, mixed fast/slow operations, multiple device instances, and state restoration.
+`discovery.json`'s `preparation_seconds` measures firmware discovery and plan creation. It excludes model compilation, native device binding, and guest execution. The model report counts declined paths but does not provide a detailed reason for every such path. Treat each artifact as evidence of its own stage.
 
-Then measure dispatch reduction and end-to-end cost with the same enabled instrumentation. Report the proportion of accesses admitted, the reasons for fallback, and the remaining workload. A high fraction of optimized status reads can be valuable even when data transmission and other stateful operations continue through the original model.
+## Current validation limits
 
-## Existing foundations
+The implementation is useful for the audited echo-style workload, but the extractor is not a complete proof of model purity or address semantics. Focused LLVM-IR checks during this handbook review reproduced accepted cases with lost read-to-clear stores and volatile accesses, incorrect offsets derived from scalar TBAA metadata, mutable address selectors, and lost narrow-integer wraparound. These checks exercised the analyzer directly; they were not compiled-C or emulator reproductions. Keep such model shapes on ordinary dispatch until their analysis and equivalence checks are established.
 
-- [Hardcoded MMIO discovery helper](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/binary/mmiofinder.py)
-- [Existing inline-I/O path](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/core/core.c)
-- [Device dispatch and instance routing](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/device_models/dev.c)
-- [Model ABI](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/include/fastdyn/device_model.h)
-- [MMIO observer contract](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/include/fastdyn_runtime.h)
+The native fast branch also needs a narrower fault and observation contract:
 
-These sources support the building blocks, not a claim that the full automatic optimizer is already implemented.
+- **Alignment:** the guard checks address equality and MPU enablement, but does not reproduce every original-load alignment check. Restrict experiments to naturally aligned accesses; the reviewed backend does not establish equivalence for an unaligned access with `CCR.UNALIGN_TRP` enabled.
+- **Observers and logs:** fast reads bypass ordinary device dispatch, `virtual_notify_mmio`, and ordinary `io.log` records. Registering a custom MMIO observer does not automatically disable optimization. Leave optimization off when complete per-access observation is required.
+- **State lifetime:** fast and ordinary reads share the initialized allocation, so normal model writes and IRQ callbacks can update values later read fast. Live device rebinding, arbitrary external writers, and complete snapshot/reset equivalence need their own contracts; registration does not supply them.
+
+The demonstrated boundary here is the explicit build/preparation/registration workflow and the echo fixture. Automatic write optimization, broader architectures, complete effect analysis, and comprehensive fault/observer equivalence remain work beyond this revision.
+
+## Evidence and the recorded measurement
+
+The checked-in [reference result](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/tests/integration/mmio_opt/reference-results.json) reports the following for the echo demonstration:
+
+| Recorded quantity | Checked-in value |
+| --- | --- |
+| Model operations / declined model paths | 4 / 1 |
+| Discovered / installed / declined sites | 12 / 10 / 2 |
+| Fast executions / guarded fallbacks | 1,000,010 / 3 |
+| Original-path QEMU execution | 1.0822 seconds |
+| Optimized QEMU execution | 0.0419 seconds |
+| Discovery and plan preparation | 0.0321 seconds |
+
+These are **source-reported measurements**, not fresh results from this documentation update. The optimization also removes ordinary dispatch logging for the fast reads, so the comparison includes reduced logging work. It does not preserve a complete original MMIO trace. The runner checks behavior and minimum counter thresholds, then reports local timings; it does not require those exact durations or counts.
+
+The [CI run for this revision](https://github.com/boardrunner2049/FastDyn/actions/runs/43115345487) completed its build, then reported **337 unit tests passed and two failed**. The failures concern symbol aliases and inferred function ranges in `test_host_analysis.py`; later integration steps were skipped. Those results do not identify the new MMIO pipeline as the cause of the failures. The pinned [CI workflow](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/.github/workflows/ci.yml) also does not invoke `run_fastdyn_mmio_opt.sh`, so run the demonstration explicitly when validating this feature.
+
+During this handbook update, three dependency-free assertions from `tests/unit/test_mmio_model.py` were executed directly and passed: effectful-call rejection, supported postfix arithmetic, and live-state-branch rejection. The local targeted pytest invocation could not start because pytest was absent; the environment also lacked the other analysis dependencies. No local QEMU build or firmware integration run was performed. The additional direct analyzer probes described above revealed accepted unsafe cases beyond the passing assertions.
+
+Before applying it to another model, compare firmware outcomes, model state changes, required faults, and required observations against the ordinary run. Then use [the performance workflow](../analysis/performance.md) to report preparation and execution costs separately.
+
+## Source guide
+
+- [Current feature overview](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/docs/AutomaticMMIOOptimization.md), [CLI option](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/main.py), and [model builder](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/model_build.py)
+- [LLVM model extractor](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/mmio_model.py) and [generated metadata ABI](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/include/fastdyn/device_model.h)
+- [Shared constant propagation](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/host/constants.py), [plan/report construction](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/mmio_plan.py), and [host plugin gates](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/virtuals/mmio_opt/host/preprocessor.py)
+- [Runtime binding and reports](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/virtuals/mmio_opt/runtime/mmio_opt.c), [elder instance resolution](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/device_models/elder/elder.c), [ordinary device dispatch](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/device_models/dev.c), and [public runtime SDK](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/include/fastdyn_runtime.h)
+- [QEMU guard and expression lowering](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/patches/qemu-fastdyn-mmio.patch) and [ordered patch setup](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/scripts/setup/qemu.sh)
+- [Integration runner](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/tests/integration/run_fastdyn_mmio_opt.sh), [fixture/configuration](https://github.com/boardrunner2049/FastDyn/tree/a38af408451394ea2f41be1e9cf1e96bc46c370f/tests/integration/mmio_opt), and [analyzer unit assertions](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/tests/unit/test_mmio_model.py)

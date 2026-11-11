@@ -15,7 +15,7 @@ This repository publishes [boardrunner2049.github.io](https://boardrunner2049.gi
 | `scripts/` | Pinned tool installer, complete-site build, and rendered-link checks |
 | `.github/workflows/pages.yml` | Build checks and GitHub Pages deployment |
 
-The book has 42 pages in eleven parts, covering installation, architecture, instrumentation, devices, simulation, analysis, extensions, advanced execution, proposed work, reference material, and maintenance. Advanced covers Supercache, inline device modeling, and the JIT patcher, with the translation insertion design nested under the patcher. Its first edition was imported from [FastDyn-Book at `84d5fcb`](https://github.com/Arslan8/FastDyn-Book/commit/84d5fcb2d7b73fe111596deb3e8da2fdf5f83eb7); future handbook changes belong here. Each chapter records its implementation baseline and any separate frontend/backend revisions.
+The book has 42 pages in eleven parts, covering installation, architecture, instrumentation, devices, simulation, analysis, extensions, advanced execution, proposed work, reference material, and maintenance. Advanced covers Supercache, inline device modeling, experimental automatic MMIO optimization, and the JIT patcher. Automatic MMIO is nested under inline modeling; the translation insertion design is nested under the patcher. Its first edition was imported from [FastDyn-Book at `84d5fcb`](https://github.com/Arslan8/FastDyn-Book/commit/84d5fcb2d7b73fe111596deb3e8da2fdf5f83eb7); future handbook changes belong here. Each chapter records its implementation baseline and any separate frontend/backend revisions.
 
 ## Build and preview
 

@@ -29,7 +29,8 @@ The terms below distinguish the firmware being executed, the tools preparing its
 | --- | --- | --- |
 | **MMIO** | Memory-mapped input/output: accesses to guest addresses whose meaning is supplied by a device rather than ordinary RAM. Reads and writes may have side effects such as consuming data, clearing status, or starting DMA. | [Device models](../devices/device-models.md) |
 | **Device model** | A runtime implementation of a device's observable behavior, including registers, transactions, state transitions, and interrupts as required by the experiment. A physical transfer function supplies only part of this behavior. | [Writing a model](../devices/writing-a-model.md) |
-| **Inline device modeling** | A specialized translated load/store at a selected firmware PC using host backing state. The current manual `finline` path requires explicit handling of the original MMIO instruction and does not automatically analyze arbitrary device models. | [Inline device modeling](../advanced/inline-device-modeling.md) |
+| **Inline device modeling** | A translated device operation at a selected firmware PC using host backing state. The legacy manual `finline` path uses a separate buffer and requires explicit handling of the original instruction. | [Inline device modeling](../advanced/inline-device-modeling.md) |
+| **Automatic MMIO optimization** | The experimental `mmio_opt` pipeline introduced at `a38af40`: model-operation extraction, shared firmware access discovery, binding to initialized elder state, and guarded load replacement. Its analyzer and runtime have documented correctness limits. | [Automatic MMIO](../designs/automatic-mmio.md) |
 | **Hardware passthrough** | Forwarding selected peripheral interactions to a real board through libhw and a probe. The real peripheral contributes behavior while firmware execution remains in QEMU. | [Hardware and traces](../devices/hardware-and-traces.md) |
 | **TwinTrace** | FastDyn's hardware-trace recording and replay machinery. Replay follows the recorded interaction contract; it does not create an unrestricted generative model of the device. | [Hardware and traces](../devices/hardware-and-traces.md) |
 | **LibVIO** | The companion library providing reusable bus, signal, DMA, and host-I/O mechanisms for C device models. Device-specific register semantics still belong to the model. | [Writing a model](../devices/writing-a-model.md) |
@@ -63,6 +64,7 @@ The terms below distinguish the firmware being executed, the tools preparing its
 ## Source guide
 
 - [Native SDK and architecture contracts](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/virtuals/README.md)
+- [Automatic MMIO pipeline at a38af40](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/docs/AutomaticMMIOOptimization.md)
 - [Host analysis contracts](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/docs/HostAnalysisRuntimeGuide.md)
 - [Co-simulation semantics](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/docs/CoSimulationSlave.md)
 - [FMU runtime preparation](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/fmu_runtime.py)

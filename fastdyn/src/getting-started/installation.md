@@ -2,7 +2,7 @@
 
 The shortest path to the bundled firmware example is a Linux source build of FastDyn and its patched QEMU. Add physical-board access, device-model libraries, or Modelica compilation when your experiment needs them. The documented host baseline is Ubuntu 24.04; the repository also provides a Docker image with a broader Gazebo and fuzzing stack.
 
-These instructions use the FastDyn repository root as the working directory. The core tutorials describe commit `f9666d7f518c373e89831d8e14a6371a27fe6436`. Advanced chapters identify newer or separate runtime revisions: follow the checkout instructions in [JIT patcher](../advanced/jit-patcher.md), [inline device modeling](../advanced/inline-device-modeling.md), or [Supercache](../advanced/supercache.md) when using those workflows.
+These instructions use the FastDyn repository root as the working directory. The core tutorials describe commit `f9666d7f518c373e89831d8e14a6371a27fe6436`. Advanced chapters identify newer or separate runtime revisions: follow the checkout instructions in [JIT patcher](../advanced/jit-patcher.md), [inline device modeling](../advanced/inline-device-modeling.md), [experimental automatic MMIO](../designs/automatic-mmio.md), or [Supercache](../advanced/supercache.md) when using those workflows.
 
 ## Build the basic runtime
 

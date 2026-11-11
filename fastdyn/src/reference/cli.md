@@ -7,7 +7,7 @@ fastdyn --help
 fastdyn COMMAND --help
 ```
 
-This reference covers the CLI at the source snapshot used by this book. Plugin-specific settings belong in TOML rather than new top-level flags.
+This reference covers the core CLI at `f9666d7f518c373e89831d8e14a6371a27fe6436`, with later additions labeled by revision. Plugin-specific settings belong in TOML rather than new top-level flags.
 
 ## Global options
 
@@ -114,6 +114,19 @@ The source paths must exist. `-o/--out-dir` is required. By default each C sourc
 
 Sources, headers, and the compiler command determine whether a model is rebuilt. A failed model does not retain an old output `.so`, and any failure makes the command exit with status 1. See [writing a model](../devices/writing-a-model.md) for the ABI.
 
+### Addition at `a38af40`: `--mmio-opt`
+
+At [`a38af408451394ea2f41be1e9cf1e96bc46c370f`](https://github.com/boardrunner2049/FastDyn/commit/a38af408451394ea2f41be1e9cf1e96bc46c370f), `build-model --mmio-opt` enables experimental extraction of read-operation metadata. Run this example from a matching FastDyn checkout with the corresponding QEMU headers and build environment:
+
+```bash
+fastdyn build-model --mmio-opt --no-vio \
+  tests/models/elder_echo.c -o build/mmio-models --json
+```
+
+This option selects `clang-18`, falling back to `clang`, and currently requires one C source per model. It embeds metadata in the normal `.so` and writes `elder_echo.mmio.json` beside it. The separate `--json` flag prints the build report, including `mmio_operations`; it is not required to create the metadata report.
+
+Building metadata does not enable substitution by itself. Configure the library as an elder scroll and enable `[CPU.cpu0.plugins.mmio_opt]` in the run configuration. The feature has reviewed correctness limitations; use the [automatic MMIO workflow](../designs/automatic-mmio.md) for its matching setup, supported execution scope, reports, and validation requirements. Ordinary `build-model` usage does not require this option or its Clang dependency.
+
 ## `help`
 
 This command browses configuration choices, distinct from Click's `--help` option:
@@ -143,3 +156,4 @@ The positional file must exist. `--top` defaults to 30. The command reports comp
 - [Runner lifecycle](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/runner.py)
 - [Worker planning and execution](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/swarm.py)
 - [Model compiler](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/model_build.py)
+- [`a38af40` experimental `--mmio-opt` option](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/main.py)

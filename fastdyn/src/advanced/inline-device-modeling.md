@@ -1,10 +1,16 @@
 # Inline device modeling
 
-FastDyn can install a small host-memory operation at a selected guest instruction. For a simple modeled register, this can move the value transfer into translated execution and avoid the ordinary device callback. The current interface is deliberately manual: supply a `finline` access map, identify the guest register, and separately arrange for the original MMIO instruction to be skipped when the inline operation replaces it.
+FastDyn's legacy `finline` interface installs a small host-memory operation at a selected guest instruction. For a simple modeled register, this can move the value transfer into translated execution and avoid the ordinary device callback. This interface is deliberately manual: supply an access map, identify the guest register, and separately arrange for the original MMIO instruction to be skipped when the inline operation replaces it.
 
-This chapter inspects FastDyn **`5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`**, its pinned QEMU dependency **`99b54836ded8dc3271eba52deee7453efc0a13b9`**, and the accompanying FastDyn patches. It extends [Device models](../devices/device-models.md) and [Virtual instructions and modifiers](../instrumentation/virtuals-and-modifiers.md). The automatic model analyzer described in [Automatically accelerate MMIO](../designs/automatic-mmio.md) remains a proposal.
+The manual lab in this chapter remains pinned to FastDyn **`5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`**, its QEMU dependency **`99b54836ded8dc3271eba52deee7453efc0a13b9`**, and the accompanying FastDyn patches. It extends [Device models](../devices/device-models.md) and [Virtual instructions and modifiers](../instrumentation/virtuals-and-modifiers.md).
 
-## What the current path provides
+## The experimental automatic alternative
+
+FastDyn **`a38af408451394ea2f41be1e9cf1e96bc46c370f`** adds an implemented experimental path, `mmio_opt`. `fastdyn build-model --mmio-opt` derives a bounded operation table from elder-model source. Firmware preparation uses shared constant propagation to discover candidate accesses; native initialization binds eligible reads to the actual state returned by the model's `init`. QEMU emits an effective-address guard and an MPU fallback around the original load, without a separate PC-skipping modifier. See the pinned [model builder](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/model_build.py), [runtime binding](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/virtuals/mmio_opt/runtime/mmio_opt.c), and [QEMU implementation](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/patches/qemu-fastdyn-mmio.patch).
+
+Use [Automatic MMIO optimization](../designs/automatic-mmio.md) for that workflow, its shipped demonstration, and its experimental limits. The manual lab below explains a different backing-state and replacement contract; its examples have not been repinned or qualified against the new optimizer.
+
+## What the manual path provides
 
 `[Machine].finline` names a text file. FastDyn forwards that path to the native plugin, which parses the file once and looks up each instruction PC during translation. A matching row installs `QEMU_PLUGIN_INLINE_LOAD_IO` or `QEMU_PLUGIN_INLINE_STORE_IO` against a host address.
 
@@ -16,9 +22,9 @@ char gpio_memory[0x400];
 
 Every selected site uses `&gpio_memory[offset]`. Despite its name, the array does not implement GPIO register semantics. It is a zero-initialized, 1 KiB block in the plugin process. It is shared by the installed inline sites, not created separately for each device or CPU.
 
-This is also distinct from a configured `[Memory.main]` or additional RAM bank. Setting `backend = "file"` and `share = true` shares guest RAM through its backing file; it does not relocate `gpio_memory` or connect it to an elder model. The public `FdModel` descriptor does not currently expose a way to bind an instance's state to this inline allocation.
+This is also distinct from a configured `[Memory.main]` or additional RAM bank. Setting `backend = "file"` and `share = true` shares guest RAM through its backing file; it does not relocate `gpio_memory` or connect it to an elder model. At this lab's `5b8bf3d` revision, the public `FdModel` descriptor does not expose a way to bind an instance's state to this inline allocation.
 
-That makes the existing path useful for controlled register-state experiments and for studying which operations can move out of device dispatch. A general peripheral optimization needs an explicit common state representation first.
+That makes the manual path useful for controlled register-state experiments and for studying which operations can move out of device dispatch. Mixing this array with ordinary model callbacks requires an explicit common-state policy; the newer automatic path has its own instance-binding mechanism.
 
 ## The access-map contract
 
@@ -67,7 +73,7 @@ The following is a **newly constructed, source-reviewed lab recipe**, not a ship
 
 Prerequisites are a Linux x86_64 host, FastDyn's Python environment and native plugin with device-model support, the pinned patched `qemu-system-arm`, and GNU Arm Embedded `arm-none-eabi-as`, `arm-none-eabi-ld`, and `arm-none-eabi-objdump`. The guest is Cortex-M3 in Thumb state. No C runtime, physical board, or FMU is involved.
 
-Use the host dependencies described in [Installation](../getting-started/installation.md), but select this chapter's source revision explicitly. The core installation walkthrough uses an earlier book baseline. For a separate lab checkout:
+Use the host dependencies described in [Installation](../getting-started/installation.md), but select this chapter's historical source revision explicitly. For a separate lab checkout:
 
 ```bash
 git clone https://github.com/boardrunner2049/FastDyn.git FastDyn-inline-lab
@@ -271,9 +277,11 @@ Interactive browsing defaults on when stdin and stdout are terminals. `--browse`
 
 The shipped `configs/minimal.toml` uses the current machine/CPU schema with `finline` disabled. The older `configs/inline_classic_config.toml` contains placeholder paths and earlier schema placement; use it as historical context rather than a ready-to-run configuration.
 
-`find_mmio_accesses()` is a separate Capstone-based ARM32/ARM64 heuristic. The current launcher does not call it when `finline` is set. It does not analyze model callbacks, prove all possible effective addresses, bind elder state, or create the required replacement policy. Its `MMIOAccess.size` is the instruction's encoding length, not the memory transaction width. Its existing test depends on an optional firmware path and checks discovery, not inline-runtime equivalence.
+At the lab's `5b8bf3d` snapshot, `find_mmio_accesses()` is a separate Capstone-based ARM32/ARM64 heuristic. That launcher does not call it when `finline` is set. The helper does not analyze model callbacks, prove all possible effective addresses, bind elder state, or create the required replacement policy. Its `MMIOAccess.size` is the instruction's encoding length, not the memory transaction width. Its test depends on an optional firmware path and checks discovery, not inline-runtime equivalence.
 
-There is no dedicated nonempty-`finline` integration test in this reviewed checkout. A useful validation campaign would extend the lab with boundary offsets, changed values, deliberate ordinary-path accesses, conditional instructions that remain unoptimized, observer behavior, and repeated resets. Compare outcomes and model transitions before measuring dispatch reduction. Include the cost of PC redirection and translation-block exits in that measurement. The proposed automatic optimizer should produce and validate these decisions; the current manual feature makes them the experiment author's responsibility.
+At `a38af40`, the helper delegates to the shared [constant-propagation service](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/host/constants.py). Its results distinguish `instruction_size` from `transfer_size`; `size` remains a compatibility alias for encoded length. The automatic consumer selects Cortex-M Thumb accesses and prepares a separate [pending plan](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/mmio_plan.py). These additions do not make a manual `finline` map self-discovering.
+
+There is no dedicated nonempty-`finline` integration test in the lab's historical checkout. A useful validation campaign would extend the lab with boundary offsets, changed values, deliberate ordinary-path accesses, conditional instructions that remain unoptimized, observer behavior, and repeated resets. Compare outcomes and model transitions before measuring dispatch reduction. Include the cost of PC redirection and translation-block exits in that measurement. The newer automatic feature has a separate [integration fixture](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/tests/integration/run_fastdyn_mmio_opt.sh); its assertions do not validate this manual replacement recipe.
 
 ## Source guide
 

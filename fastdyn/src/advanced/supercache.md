@@ -8,12 +8,12 @@ This is an implemented development-branch capability with a separate QEMU prereq
 
 | Component | Reviewed revision | Supercache capability |
 | --- | --- | --- |
-| FastDyn main | [`5b8bf3d`](https://github.com/boardrunner2049/FastDyn/tree/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c) | No `supercache` or `supercache_flat` frontend configuration |
+| FastDyn main | [`a38af40`](https://github.com/boardrunner2049/FastDyn/tree/a38af408451394ea2f41be1e9cf1e96bc46c370f) | No `supercache` or `supercache_flat` frontend configuration |
 | QEMU submodule pinned by that main revision and the PX4 preview | [`99b54836`](https://github.com/boardrunner2049/qemu/tree/99b54836ded8dc3271eba52deee7453efc0a13b9) | Does not contain the persistent-cache implementation |
 | FastDyn `px4-v1.17-firmware-slicing` preview | [`0e13b739`](https://github.com/boardrunner2049/FastDyn/tree/0e13b73986a66270a6d8452b2c0147af7b874d29) | Configuration fields, input manifest, invalidation, and unit tests |
 | QEMU `fastdyn` development revision | [`12f5e688`](https://github.com/boardrunner2049/qemu/tree/12f5e68807650822d3edb7e1073f524e0262bec7) | Persistent native translations, plugin callback reconstruction, and optional flat lookup |
 
-The workflow below deliberately combines the last two revisions. Following the preview's default submodule build alone still selects the older backend. Main's ordered QEMU patch series, including guest-instruction fragments, is a different build path and is not qualified by this example.
+The workflow below deliberately combines the last two revisions. Following the preview's default submodule build alone still selects the older backend. Main's ordered QEMU patch series, including guest-instruction fragments and automatic MMIO replacement, is a different build path and is not qualified by this example. The automatic MMIO implementation does not establish compatibility with this Supercache combination.
 
 ## Build the advanced runtime
 
@@ -139,7 +139,7 @@ The preview includes six frontend unit tests covering unchanged-input reuse, fla
 
 ## Source guide
 
-- [Current-main QEMU build and ordered patch selection](https://github.com/boardrunner2049/FastDyn/blob/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c/scripts/setup/qemu.sh), alongside [current-main launch construction](https://github.com/boardrunner2049/FastDyn/blob/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c/src/fastdyn/targets/qemu_target.py)
+- [Reviewed-main QEMU build and ordered patch selection](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/scripts/setup/qemu.sh), alongside [reviewed-main launch construction](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/targets/qemu_target.py)
 - [Preview setup flags](https://github.com/boardrunner2049/FastDyn/blob/0e13b73986a66270a6d8452b2c0147af7b874d29/setup.sh), [QEMU setup and compatibility patch handling](https://github.com/boardrunner2049/FastDyn/blob/0e13b73986a66270a6d8452b2c0147af7b874d29/scripts/setup/qemu.sh), and [bundled minimal fixture](https://github.com/boardrunner2049/FastDyn/blob/0e13b73986a66270a6d8452b2c0147af7b874d29/configs/minimal.toml)
 - [Frontend fingerprint, invalidation, and launch inputs](https://github.com/boardrunner2049/FastDyn/blob/0e13b73986a66270a6d8452b2c0147af7b874d29/src/fastdyn/targets/qemu_target.py), [TOML validation](https://github.com/boardrunner2049/FastDyn/blob/0e13b73986a66270a6d8452b2c0147af7b874d29/src/fastdyn/toml_parser.py), and [frontend unit assertions](https://github.com/boardrunner2049/FastDyn/blob/0e13b73986a66270a6d8452b2c0147af7b874d29/tests/unit/test_supercache.py)
 - [Persistent cache, keys, records, compatibility, and flat lookup](https://github.com/boardrunner2049/qemu/blob/12f5e68807650822d3edb7e1073f524e0262bec7/tcg/supercache.c)

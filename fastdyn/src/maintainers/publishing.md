@@ -99,6 +99,6 @@ Check the workflow result and then inspect the live `/fastdyn/` page. A successf
 
 ## Updating the source baseline
 
-Core chapters retain FastDyn baseline `f9666d7f518c373e89831d8e14a6371a27fe6436`; the Advanced section was reviewed at main `5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`, with separate frontend/backend pins for Supercache. A baseline update should review the public APIs, configuration parser, build defaults, shipped examples, and tests before replacing source-link SHAs in bulk. Update the workflow's checkout instructions as well as its source links so readers do not run a newer feature from an older tutorial checkout.
+Core chapters retain FastDyn baseline `f9666d7f518c373e89831d8e14a6371a27fe6436`. The JIT patcher and manual inline lab use `5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`; automatic MMIO and related API additions use `a38af408451394ea2f41be1e9cf1e96bc46c370f`. Supercache has separate frontend/backend pins. A baseline update should review the public APIs, configuration parser, build defaults, shipped examples, and tests before replacing source-link SHAs in bulk. Update the workflow's checkout instructions as well as its source links so readers do not run a newer feature from an older tutorial checkout.
 
 Keep branch-preview evidence pinned to the revision that was inspected. When a branch is merged, check the resulting main implementation instead of assuming the earlier branch text is still exact. The [source map](../reference/source-map.md) identifies the original documentation and code locations behind each chapter.

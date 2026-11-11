@@ -53,12 +53,12 @@
 
 * [Supercache](advanced/supercache.md)
 * [Inline device modeling](advanced/inline-device-modeling.md)
+  * [Automatic MMIO optimization](designs/automatic-mmio.md)
 * [JIT patcher](advanced/jit-patcher.md)
   * [Translation insertion design](designs/translation-insertion.md)
 
 # Proposed extensions
 
-* [Automatically accelerate MMIO](designs/automatic-mmio.md)
 * [Execute a function directly](designs/function-execution.md)
 * [Flight controller and ESCape32](designs/escape32.md)
 

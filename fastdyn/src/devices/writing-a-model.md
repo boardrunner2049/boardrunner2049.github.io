@@ -96,6 +96,28 @@ fastdyn build-model --name spi4 models/spi4.c models/spi4_dma.c -o build/models
 
 That command produces one `spi4.so`. Without `--name`, each input C file is a separate model. Review duplicate output names before combining directories.
 
+## Experimental extraction at `a38af40`
+
+FastDyn [`a38af408451394ea2f41be1e9cf1e96bc46c370f`](https://github.com/boardrunner2049/FastDyn/commit/a38af408451394ea2f41be1e9cf1e96bc46c370f) adds optional automatic MMIO metadata generation. This is a later addition to the core `f9666d7` model workflow above. Follow the [automatic MMIO setup](../designs/automatic-mmio.md) to build that revision with its matching patched QEMU and plugin before using it.
+
+With **Clang 18 or a compatible `clang`** available, run from the FastDyn repository root:
+
+```bash
+fastdyn build-model --mmio-opt --no-vio \
+  tests/models/elder_echo.c -o build/mmio-models
+```
+
+The outputs are `build/mmio-models/elder_echo.so` and `build/mmio-models/elder_echo.mmio.json`. The library retains its ordinary `fastdyn_model` callbacks and embeds a generated `fastdyn_mmio_model` operation table. The JSON report exposes the extracted operations for inspection; the runtime consumes the embedded table. Clang is required for this extraction option, while ordinary model builds retain their existing compiler selection.
+
+The extractor currently accepts one C source per model, so the multi-source `--name` example above does not apply with `--mmio-opt`. Configure the generated library as the normal elder `scroll`, then extend the existing CPU configuration with this fragment:
+
+```toml
+[CPU.cpu0.plugins.mmio_opt]
+enabled = true
+```
+
+The first execution path targets a single Cortex-M CPU. **This is experimental:** an accepted operation is not a proof that it preserves the original callback. Use an explicitly audited model, inspect its build and installation reports, and compare against ordinary execution. The [complete workflow and reviewed limitations](../designs/automatic-mmio.md) explain the extractor and guest-semantics boundaries. Leaving the plugin disabled keeps the same library usable through its ordinary elder callbacks.
+
 ## Validate behavior at the boundary
 
 A useful model check exercises reset state, width-sensitive reads and writes, boundary addresses, per-instance isolation, and interrupt ordering. Then run the target firmware path that motivated the model and compare its I/O against a recorded trace or known hardware behavior. Successful loading establishes ABI compatibility; successful firmware progress establishes only the behavior exercised by that run.
@@ -107,3 +129,5 @@ A useful model check exercises reset state, width-sensitive reads and writes, bo
 - [Incremental model builder](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/model_build.py)
 - [CLI options](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/main.py)
 - [Loader validation and LibVIO logging](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/device_models/elder/elder.c)
+- [`a38af40` optional Clang extraction and generated reports](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/model_build.py)
+- [`a38af40` model operation extractor](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/src/fastdyn/mmio_model.py)

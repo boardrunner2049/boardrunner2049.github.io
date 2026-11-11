@@ -111,6 +111,19 @@ An MMIO observer receives `VirtualMmioAccess`: PC, address, value, size, directi
 
 A translation hook receives QEMU's block object for inspection/instrumentation. Translation is not a guest execution event. Install runtime-derived rules before the relevant blocks are translated; the registration APIs do not advertise automatic invalidation of previously cached translations. A gated modifier checks the provided flag during guest execution, so the flag's storage must remain valid.
 
+## Addition at `a38af40`: bind initialized device state
+
+FastDyn [`a38af408451394ea2f41be1e9cf1e96bc46c370f`](https://github.com/boardrunner2049/FastDyn/commit/a38af408451394ea2f41be1e9cf1e96bc46c370f) adds two native extension points used by the experimental [automatic MMIO plugin](../designs/automatic-mmio.md). They require that revision's runtime SDK and matching patched QEMU; they are additions to the core `f9666d7` interfaces described above.
+
+| API | Contract |
+| --- | --- |
+| `virtual_register_post_device_init(ctx, callback)` | Register initialization that runs after successful `dev_init` and before guest translation, when device instances exist |
+| `virtual_register_mmio_replacement(ctx, replacement, out_hook_id)` | Submit a typed `FastDynMmioReplacement` through the runtime SDK during that initialization phase |
+
+The MMIO plugin illustrates the division of work: host preparation writes a candidate plan; native initialization loads it and registers post-device-init work; the later callback resolves an elder instance and its live `opaque` allocation before submitting a replacement. Registration returns success or failure, and the plugin records installed and declined sites in its report.
+
+This lifecycle is useful whenever preparation can identify a site but binding needs initialized device state. Keep the state allocation valid for the lifetime of its generated accesses. The typed registration interface does not prove that an extracted expression preserves model behavior or all guest fault semantics; follow the automatic MMIO chapter's reviewed scope and validation requirements.
+
 ## Ownership and validation
 
 Keep feature-specific selection, schema formats, and runtime interpretation in the plugin. Move a helper to `virtuals/utils/` only when multiple current plugins need it. Generic capabilities belong in the runtime SDK or frontend through a separate, reusable interface.
@@ -125,3 +138,5 @@ Inspect generated artifacts and rules before diagnosing runtime behavior. Exerci
 - [Complete external example, host half](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/tests/plugins/mmio_count/host/preprocessor.py)
 - [Complete external example, runtime half](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/tests/plugins/mmio_count/runtime/mmio_count.c)
 - [Native instrumentation and counter implementation](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/core/core.c)
+- [`a38af40` post-device-init and typed replacement APIs](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/include/fastdyn_runtime.h)
+- [`a38af40` MMIO plugin lifecycle example](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/virtuals/mmio_opt/runtime/mmio_opt.c)
