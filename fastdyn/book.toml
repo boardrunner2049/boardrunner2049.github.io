@@ -1,0 +1,27 @@
+[book]
+title = "The FastDyn Book"
+authors = ["FastDyn contributors"]
+description = "Run real firmware, shape its environment, and build repeatable experiments with FastDyn."
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
+create-missing = false
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+smart-punctuation = false
+site-url = "/fastdyn/"
+git-repository-url = "https://github.com/boardrunner2049/boardrunner2049.github.io"
+edit-url-template = "https://github.com/boardrunner2049/boardrunner2049.github.io/edit/main/fastdyn/{path}"
+additional-css = ["theme/fastdyn.css"]
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
+
+[output.html.search]
+enable = true
+limit-results = 30

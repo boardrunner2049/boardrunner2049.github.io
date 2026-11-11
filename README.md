@@ -1,34 +1,68 @@
-# BoardRunner website
+# BoardRunner website and the FastDyn Book
 
-Static, dependency-free site for the BoardRunner research and engineering effort. The landing page is in index.html, the blog archive is in blog/index.html, and individual posts live in blog/<slug>/index.html. Shared visual styles are in styles.css. The technical walkthrough is explicitly conceptual, while the configuration excerpt is from LibVIO's published API guide.
+This repository publishes [boardrunner2049.github.io](https://boardrunner2049.github.io/). It contains the BoardRunner homepage, field-notes blog, and **[the FastDyn Book](https://boardrunner2049.github.io/fastdyn/)**. The book is a tab in the website navigation and is built from Markdown with mdBook.
 
-## Preview locally
+## Repository layout
 
-From the repository root, run:
+| Path | Purpose |
+| --- | --- |
+| `index.html`, `styles.css`, `favicon.svg` | BoardRunner homepage and shared website assets |
+| `blog/` | Blog archive, posts, and RSS feed |
+| `fastdyn/book.toml` | mdBook configuration |
+| `fastdyn/src/` | All handbook chapters and `SUMMARY.md` navigation |
+| `fastdyn/theme/` | Book navigation tabs, styling, and favicon |
+| `scripts/` | Pinned tool installer, complete-site build, and rendered-link checks |
+| `.github/workflows/pages.yml` | Build checks and GitHub Pages deployment |
 
-    python3 -m http.server 8000
+The book has 39 pages in ten parts, covering installation, architecture, instrumentation, devices, simulation, analysis, extensions, proposed work, reference material, and maintenance. Its first edition was imported from [FastDyn-Book at `84d5fcb`](https://github.com/Arslan8/FastDyn-Book/commit/84d5fcb2d7b73fe111596deb3e8da2fdf5f83eb7); future handbook changes belong here. The implementation baseline and experimental-branch revisions are recorded in the chapters.
 
-Then open http://localhost:8000/. The site needs no build step or JavaScript. Assets use relative paths, so the same files work at an organization root or a project-site path.
+## Build and preview
 
-## Updating content
+On Linux x86_64, run from the repository root:
 
-Edit the relevant section of index.html and check claims against the current repositories before publishing. The most useful places to update are the component list, the interaction figure, and the getting-started links. Keep conceptual diagrams labeled as such. The only third-party technical excerpt on the site is attributed in its caption to [LibVIO's API guide](https://github.com/boardrunner2049/LibVIO/blob/main/docs/API.md); no external images or fonts are used.
+```bash
+./scripts/install-book-tools.sh
+./scripts/build-site.sh
+python3 -m http.server 8000 --directory _site
+```
 
-Real artifacts that would strengthen a future evidence section include a documented end-to-end firmware trace, a screenshot or recording of a device model run, a reproducible configuration with firmware, and any published research. Add these only with source links and explanatory captions.
+Open [localhost:8000](http://localhost:8000/) for the website or [localhost:8000/fastdyn/](http://localhost:8000/fastdyn/) for the book.
 
-## Publishing a blog post
+The installer downloads mdBook **0.5.4** and mdbook-mermaid **0.17.1** from their official releases, verifies their SHA-256 checksums, and installs them in `.tools/bin`. On another platform, use Rust's Cargo:
 
-1. Copy blog/virtual-io-at-the-boundary/index.html to blog/<new-slug>/index.html. Update the title, description, heading, date, article text, section IDs, and source links. Keep the relative stylesheet and favicon paths at ../../styles.css and ../../favicon.svg.
-2. Add a newest-first entry to blog/index.html. The archive is hand-maintained so it remains readable without JavaScript.
-3. Add an item to blog/feed.xml and update lastBuildDate. RSS item links use this repository's current organization-root URL.
-4. Update the featured note in index.html if the new post should appear on the home page. Preview all three pages locally, then push to main.
+```bash
+cargo install mdbook --locked --version 0.5.4
+cargo install mdbook-mermaid --locked --version 0.17.1
+./scripts/build-site.sh
+```
 
-The first post is a technical explainer based on the public LibVIO documentation, not an announcement of a BoardRunner release. For later posts, distinguish documented software, conceptual examples, and project goals in the same way.
+Matching tools on `PATH` also work. The build script generates Mermaid's JavaScript from the pinned preprocessor, builds the book, stages the homepage and blog alongside it in `_site`, and checks local links, anchors, and chapter coverage. Readers receive static files, including search and diagram support; no application server or external JavaScript CDN is required.
 
-## Deployment
+Generated `fastdyn/book/`, `_site/`, `.tools/`, and Mermaid assets are ignored by Git. The root homepage and blog can still be previewed directly with a simple HTTP server, but the book tab needs the complete build above.
 
-This repository is boardrunner2049/boardrunner2049.github.io, which is the required name for the organization root site at https://boardrunner2049.github.io/. A repository called boardrunner.github.io under the same organization would ordinarily publish at https://boardrunner2049.github.io/boardrunner.github.io/. Do not rename this repository for the root URL.
+## Update the handbook
 
-The workflow in .github/workflows/pages.yml deploys the repository root on pushes to main or manual dispatch. The Pages publishing source is configured as **GitHub Actions**. If this repository is recreated, verify that setting at https://github.com/boardrunner2049/boardrunner2049.github.io/settings/pages . The workflow uses only contents: read, pages: write, and id-token: write permissions. If the Pages environment has required reviewers, approve the deployment there.
+Edit the Markdown in `fastdyn/src/`. Add or reorder pages in `fastdyn/src/SUMMARY.md`; mdBook part headings use a single `#`. Use relative `.md` links between chapters. The build rewrites these to HTML links.
 
-The public BoardRunner and FastDyn repositories were empty when this content was prepared. That says only that no public implementation files were available to cite; it does not establish the status of the research system itself. The QEMU repository is described only as a fork because project-specific changes were not verified.
+Keep claims and examples tied to their inspected implementation revision. Distinguish current interfaces, experimental branches, and proposed extensions. Follow the handbook's [contribution guide](fastdyn/src/maintainers/contributing.md) and [publishing guide](fastdyn/src/maintainers/publishing.md).
+
+After building, review the changed chapter, sidebar, tables, code blocks, and diagrams. Test search and the navigation tabs. A successful documentation build does not establish that a firmware experiment was rerun.
+
+## Update the homepage or blog
+
+Edit the relevant HTML and check technical claims against the source repositories. Keep conceptual examples labeled. The LibVIO excerpt on the homepage is attributed to its [API guide](https://github.com/boardrunner2049/LibVIO/blob/main/docs/API.md).
+
+To add a blog post:
+
+1. Copy `blog/virtual-io-at-the-boundary/index.html` to `blog/<new-slug>/index.html`. Update its title, description, date, text, section IDs, and sources. Preserve the header's FastDyn Book tab and the relative stylesheet and favicon paths.
+2. Add a newest-first entry to `blog/index.html`.
+3. Add an item to `blog/feed.xml` and update `lastBuildDate`.
+4. Update the featured note in `index.html` when appropriate, then build and preview the whole site.
+
+## Deploy
+
+The existing GitHub Pages source is **GitHub Actions**. Push to `main` or dispatch `.github/workflows/pages.yml` to build and deploy the complete `_site` artifact. Pull requests build and validate the site without deploying it. The deployment job has `pages: write` and `id-token: write`; the build job has read-only repository access. Actions and book tools are pinned.
+
+The one workflow owns both the root site and `/fastdyn/`. Keep them in the same artifact. Confirm the workflow completes and inspect the live page before reporting a published update.
+
+The repository name `boardrunner2049.github.io` establishes the organization-root site URL. If the repository is recreated, select **GitHub Actions** under Settings → Pages before deploying.

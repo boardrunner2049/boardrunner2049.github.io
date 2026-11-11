@@ -1,0 +1,48 @@
+:root {
+  --content-max-width: 900px;
+}
+
+.light {
+  --links: #963e25;
+}
+
+.site-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  align-items: center;
+  padding: 1.2rem 2rem 0;
+  border-bottom: 1px solid var(--table-border-color);
+  font-size: 1.4rem;
+}
+
+.site-tabs a {
+  padding: 0.8rem 0;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.site-tabs a[aria-current] {
+  color: var(--links);
+  border-bottom: 3px solid currentColor;
+  font-weight: bold;
+}
+
+.site-tabs a:hover {
+  color: var(--links);
+}
+
+.site-tabs a:focus-visible {
+  outline: 2px solid var(--links);
+  outline-offset: 4px;
+}
+
+main .mermaid {
+  margin: 2rem 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+main .mermaid svg {
+  height: auto;
+}
