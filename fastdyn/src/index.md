@@ -60,11 +60,12 @@ The bundled configuration changes a function argument to `3`, prints the observe
 | Supply hardware behavior | [Device models](devices/device-models.md), [hardware and traces](devices/hardware-and-traces.md) |
 | Run a controller against a plant | [Physics and FMUs](simulation/physics-and-fmu.md), [flight controllers](simulation/flight-controllers.md) |
 | Build an analysis or downstream tool | [Python API](extending/python-api.md), [virtual plugins](extending/virtual-plugins.md), [host analysis](extending/host-analysis.md) |
-| Explore the next capabilities | [Translation insertion](designs/translation-insertion.md), [automatic MMIO](designs/automatic-mmio.md), [function execution](designs/function-execution.md), [ESCape32](designs/escape32.md) |
+| Work with advanced execution mechanisms | [Supercache](advanced/supercache.md), [inline device modeling](advanced/inline-device-modeling.md), [JIT patcher](advanced/jit-patcher.md) |
+| Explore the next capabilities | [Automatic MMIO](designs/automatic-mmio.md), [function execution](designs/function-execution.md), [ESCape32](designs/escape32.md) |
 
 ## Revision and evidence
 
-This edition was prepared on **11 November 2026**. Main-branch instructions describe FastDyn commit [`f9666d7`](https://github.com/boardrunner2049/FastDyn/commit/f9666d7f518c373e89831d8e14a6371a27fe6436). Chapter source guides link to that revision. Experimental branches have their own explicit pins. Design chapters describe proposed extensions and do not introduce runnable commands for APIs that are not implemented.
+This edition was prepared on **11 November 2026**. Core chapters retain the FastDyn baseline [`f9666d7`](https://github.com/boardrunner2049/FastDyn/commit/f9666d7f518c373e89831d8e14a6371a27fe6436). The Advanced section was reviewed against the newer main revision [`5b8bf3d`](https://github.com/boardrunner2049/FastDyn/commit/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c), which includes the JIT patcher's guest instruction fragments. Supercache requires the separate frontend/backend revisions identified in its chapter. Each chapter's source guide records its implementation evidence; a later review of one feature does not imply that every older chapter was revalidated at the newer revision. Proposed extensions remain separate from implemented workflows.
 
 The book was checked against source, configuration examples, and test programs. It is not a new measurement campaign. See the [capability status](reference/status.md) and [testing guide](analysis/testing-and-reproducibility.md) for the scope of an experiment and the evidence to retain.
 

@@ -59,7 +59,7 @@ The native core registers instrumentation in the following order within its inst
 
 FastDyn already contains a specialized path that associates a known guest PC with an inline I/O load or store. `[Machine].finline` selects a user-supplied access-map file; the frontend forwards that path to the native parser. Each parsed record contains a PC, read/write direction, device name, offset, and register. The translation callback then installs `QEMU_PLUGIN_INLINE_LOAD_IO` or `QEMU_PLUGIN_INLINE_STORE_IO`.
 
-The current implementation addresses a global `gpio_memory[0x400]` buffer. The record's device name is parsed but does not choose a separate device backing block in this path. It is a concrete foundation for avoiding normal callback dispatch at selected accesses, with a narrow current contract. It does not yet constitute general automatic analysis of arbitrary device models or automatic installation of safe fast paths. The [automatic MMIO design](../designs/automatic-mmio.md) explains that next step.
+The current implementation addresses a global `gpio_memory[0x400]` buffer. The record's device name is parsed but does not choose a separate device backing block in this path. An inline hook executes before the original instruction; replacing an MMIO operation also requires a separately validated control-flow action that suppresses that original access. The [inline device modeling chapter](../advanced/inline-device-modeling.md) explains the exact backend semantics and a manual workflow. General automatic analysis of arbitrary device models and installation of safe fast paths remain the subject of the [automatic MMIO design](../designs/automatic-mmio.md).
 
 ## Runtime models and observations
 

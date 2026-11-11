@@ -2,7 +2,7 @@
 
 Two development branches extend the flight-controller examples beyond this book's main revision. Both execute embedded board firmware and connect it to an FMU loaded inside the FastDyn/QEMU process. The controller, scheduler, and physical feedback can run together without a separate physics server.
 
-Use the matching source revision for the commands below. These features and results should not be assumed to exist on the book's main baseline.
+Use the matching source revision for the commands below. These features and results should not be assumed to exist on the core chapters' `f9666d7` baseline; a later main-branch merge also needs its own source and validation review.
 
 | Preview | Reviewed FastDyn revision | Focus |
 | --- | --- | --- |
@@ -127,8 +127,10 @@ The reviewed PX4 revision also adds FastDyn configuration support for the QEMU f
 ```toml
 [Machine]
 supercache = "../cache/firmware.sc"
-supercache_flat = true
+supercache_flat = false
 ```
+
+The preview's pinned QEMU submodule does not contain Supercache. The [advanced Supercache chapter](../advanced/supercache.md) pairs this frontend with the separately pinned QEMU implementation and gives the complete build and cold/warm workflow. Begin with normal mode; flat mode additionally requires immutable executable guest memory and its documented address-span limits.
 
 The cache path is relative to the TOML. FastDyn records effective configuration, generated instrumentation, and native input identities in an adjacent manifest, and discards stale caches when those inputs change. Large native files use path, size, and modification time rather than a complete content digest. Use a trusted filesystem and separate cache files for independent workers.
 

@@ -53,7 +53,7 @@ exact_budget_stop = false
 | `edge_coverage` | `false` | Add cumulative edge output when coverage is available. |
 | `fuzzing` | `false` | Start the compiled input backend. |
 | `fuzzing_schema` | Absent | JSON schema file for the generic native fuzzer. |
-| `finline` | Absent | Existing static inline-I/O mapping path. |
+| `finline` | Absent | Existing static inline-I/O mapping path; see [inline device modeling](../advanced/inline-device-modeling.md) for its access-map and original-instruction handling. |
 | `savestate_extra_ranges` | Empty array | Additional `{ start, size }` regions for the native save-state machinery. |
 
 `FASTDYN_COVERAGE`, `FASTDYN_EDGE_COVERAGE`, and `FASTDYN_FUZZING` override their corresponding booleans. A save-state range accepts integer or integer-string addresses and a positive size; ranges exceeding the 64-bit address space are rejected. These settings do not make the current ARM-oriented snapshot implementation architecture-independent.

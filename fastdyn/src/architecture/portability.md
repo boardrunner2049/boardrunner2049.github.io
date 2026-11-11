@@ -44,7 +44,7 @@ The default setup builds the ARM QEMU executable. When using another guest, sele
 
 Keep generic policy separate from architecture mechanics. A host analysis can return an address or a candidate access description; an architecture adapter supplies decoding, ABI rules, and instruction effects. A runtime plugin can share its event logic while using target-specific state-access helpers.
 
-The proposed [translation insertion design](../designs/translation-insertion.md) follows this rule: one insertion contract with per-target decoder adapters. The proposed [function harness](../designs/function-execution.md) likewise separates dependency planning from ABI setup. Neither design defines the framework around one microcontroller family.
+The [JIT patcher](../advanced/jit-patcher.md), reviewed at the newer main revision `5b8bf3d`, follows this rule: one byte-fragment registration contract with explicit ISA, mode, and instruction order, backed by target-specific admission and decoding. Its [translation insertion design](../designs/translation-insertion.md) explains how original guest addresses remain stable. The proposed [function harness](../designs/function-execution.md) likewise separates dependency planning from ABI setup. Neither interface is defined around one microcontroller family.
 
 ## Source guide
 

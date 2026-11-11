@@ -78,7 +78,9 @@ The comparison is meaningful only for the stated baseline. Comparing a full envi
 
 **Repeated analysis.** Reuse the run-scoped host-analysis session rather than reopening the ELF and rebuilding the same indexes in each preprocessor. Keep feature-specific planning outside the shared fact services.
 
-**High-frequency callbacks.** Count how often an event occurs and how much work its handler performs. A small cost in a polling loop may dominate a larger initialization operation. Current modifiers and specialized inline I/O provide narrow fast paths; the [automatic-MMIO design](../designs/automatic-mmio.md) describes the proposed generalization.
+**High-frequency callbacks.** Count how often an event occurs and how much work its handler performs. A small cost in a polling loop may dominate a larger initialization operation. [Inline device modeling](../advanced/inline-device-modeling.md) covers the specialized I/O path; the [JIT patcher](../advanced/jit-patcher.md) covers admitted register-only guest instruction fragments. The [automatic-MMIO design](../designs/automatic-mmio.md) describes the proposed model-analysis generalization.
+
+**Repeated translation.** [Supercache](../advanced/supercache.md) covers persistence and reuse of translated code in the separate backend that implements it. Distinguish a cold cache population run, a subsequent reuse run, and the complete experiment duration. Keep firmware, backend, plugin, machine, and instrumentation identities fixed; inspect cache compatibility and invalidation before attributing a timing difference to reuse.
 
 **Observation volume.** Function traces, register logs, MMIO observations, and detailed QEMU logs can materially change throughput and output volume. Select the evidence the experiment needs. The current finite logging buffer and drain thread do not establish universal lossless observation under arbitrary load.
 

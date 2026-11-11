@@ -67,7 +67,7 @@ This separation lets a new peripheral library improve many firmware experiments 
 
 ## Continue
 
-Build an elder library in [Writing a device model](writing-a-model.md), or connect a board and record a trace in [Hardware and trace replay](hardware-and-traces.md).
+Build an elder library in [Writing a device model](writing-a-model.md), or connect a board and record a trace in [Hardware and trace replay](hardware-and-traces.md). For selected access sites, [inline device modeling](../advanced/inline-device-modeling.md) explains the specialized translation path, its current backing-state limitations, and the checks needed before replacing an ordinary device access.
 
 ## Source guide
 

@@ -6,7 +6,7 @@ Handbook source changes belong in [boardrunner2049/boardrunner2049.github.io](ht
 
 ## Choose the right chapter
 
-User workflows belong in getting started, instrumentation, devices, simulation, and analysis. API and extension contracts belong in extending and reference. Architectural explanations should identify component responsibilities and show how a decision affects execution. Proposals belong in designs until the corresponding interface is implemented and has a demonstrated workflow.
+User workflows belong in getting started, instrumentation, devices, simulation, and analysis. Advanced execution mechanisms belong in advanced; API and extension contracts belong in extending and reference. Architectural explanations should identify component responsibilities and show how a decision affects execution. When a proposal becomes implemented, update its status, link the practical chapter, and move it out of Proposed extensions in `SUMMARY.md`. Keep an existing URL when it remains useful as design rationale.
 
 Use the [source map](../reference/source-map.md) before adding a new page. It helps avoid creating a second explanation of an API that already has a natural home.
 
@@ -14,7 +14,7 @@ Use the [source map](../reference/source-map.md) before adding a new page. It he
 
 Read the current implementation and relevant tests, not only an older README. Add a short source guide with pinned links to the files that establish the chapter's contract. Use tests as evidence of what is asserted, and distinguish the existence of a test from a test result observed during the documentation change.
 
-The main implementation baseline for this edition is `f9666d7f518c373e89831d8e14a6371a27fe6436`. For a branch-only feature, name the branch, pin the revision, and state the prerequisites and validation level. For a proposal, describe intended semantics and the existing foundations without presenting an invented API as current functionality.
+The core implementation baseline is `f9666d7f518c373e89831d8e14a6371a27fe6436`; the Advanced section was reviewed at main `5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`. Supercache additionally records separate frontend/backend revisions. Preserve chapter-level pins when updating only part of the book. For a branch-only feature, name the branch, pin the revision, and state the prerequisites and validation level. For a proposal, describe intended semantics and the existing foundations without presenting an invented API as current functionality.
 
 If code and earlier documentation disagree, document the behavior the inspected implementation provides and keep the explanation useful to the reader. A handbook chapter should not become an unrelated backlog of every issue found during inspection.
 

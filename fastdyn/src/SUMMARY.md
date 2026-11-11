@@ -49,9 +49,15 @@
 * [Write a virtual or run plugin](extending/virtual-plugins.md)
 * [Shared host analysis](extending/host-analysis.md)
 
+# Advanced
+
+* [Supercache](advanced/supercache.md)
+* [Inline device modeling](advanced/inline-device-modeling.md)
+* [JIT patcher](advanced/jit-patcher.md)
+  * [Translation insertion design](designs/translation-insertion.md)
+
 # Proposed extensions
 
-* [Insert instructions during translation](designs/translation-insertion.md)
 * [Automatically accelerate MMIO](designs/automatic-mmio.md)
 * [Execute a function directly](designs/function-execution.md)
 * [Flight controller and ESCape32](designs/escape32.md)

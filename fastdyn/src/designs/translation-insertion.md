@@ -1,26 +1,18 @@
 # Insert instructions during translation
 
-**Status: proposed extension.** Current FastDyn has virtual callbacks, a modifier language, and specialized inline operations. The general byte-sequence insertion API described here is a design direction, not a callable API in the documented main revision.
+**Status: implemented with a bounded instruction subset at FastDyn [`5b8bf3d`](https://github.com/boardrunner2049/FastDyn/commit/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c).** The [JIT patcher](../advanced/jit-patcher.md) chapter covers the native API, supported profiles, and shipped example. This page explains the design: additional guest instructions become translated work at an existing firmware address while the original image and address layout remain intact.
 
-The idea is simple: register additional **guest instructions** at an existing guest PC, and let the translator translate those instructions before the original instruction. The injected sequence contributes execution behavior without occupying new bytes in the firmware image. When the sequence is safe to emit inline, it can remain in the same translation block as the original code.
+## Add execution without moving the firmware
 
-## The intended interface
+A plugin supplies encoded instructions for the guest ISA and an anchor PC. FastDyn validates the registration, and the patched QEMU frontend translates an admitted fragment immediately before the original instruction. The bytes are input to translation; they are not written into the firmware image or decoded as host machine code.
 
-The conceptual interface is:
+This is useful when a small register computation belongs directly in the translated path. A fragment can prepare an argument, mask a value, or adjust arithmetic state before an existing instruction consumes it. An assembler may produce the byte array during development, but the runtime API accepts bytes and an explicit encoding profile. It does not expose the full TCG interface.
 
-```text
-insert_before(guest_pc, instruction_bytes)
-```
+Adding fragment operations increases the translated work at the site. It does not relocate functions, overwrite a prologue, or require a trampoline in guest memory. The original instruction retains its guest address, length, and plugin identity. Its ordinary fallthrough is still determined by that original instruction and the target architecture.
 
-The CPU context supplies the target architecture and instruction mode. `instruction_bytes` contains encodings for that guest ISA, not host machine code and not a public TCG program. An assembler can be a convenience layer for producing the bytes; the core API does not require assembly text or a particular assembler.
+## Keep the anchor and decode cursor separate
 
-For example, a sequence that computes a new argument value could run before the original call instruction. Inserting 100 extra instructions would increase the amount of translated work, but would not relocate the original call, change its symbol address, or move the next original instruction. There is no overwritten prologue or trampoline to fit into the firmware's bytes.
-
-The count is an illustration of the address contract, not an unlimited translation-block size guarantee. The first milestone should reject an oversized emission before execution. Splitting a sequence across blocks is later work: it needs a resumable insertion cursor so a block boundary cannot replay or skip injected operations.
-
-## Keep two positions distinct
-
-The translator needs to distinguish an **anchor address in the original firmware** from the cursor used to decode the injected byte sequence. Advancing through the injected bytes must not advance the original firmware PC. After insertion, normal decoding resumes at the original instruction and then follows its original length and control-flow semantics.
+The anchor identifies an instruction in the original image. The fragment cursor identifies a position in the additional byte sequence. Advancing the latter must not advance the firmware's decode position.
 
 ```mermaid
 flowchart TD
@@ -32,54 +24,45 @@ flowchart TD
     E --> F["Continue original guest addresses"]
 ```
 
-The insertion changes architectural state deliberately. The original instruction observes the resulting register and flag state. It does not acquire a new address merely because more host operations execute before it.
+The frontend emits the accepted fragment into the same TCG stream, restores the original decode context, and translates the original instruction. Fragment offsets support diagnostics without becoming new guest addresses. The reader-visible API and the target adapters enforce this distinction together.
 
-## Architecture-neutral contract, target-specific mechanics
+## One registration contract, explicit target profiles
 
-The shared layer should own registration, validation results, insertion ordering, lifetime, and diagnostics. Each target adapter should own the decoder integration and rules that depend on its ISA.
+`virtual_insert_before()` takes the guest PC, bytes, length, and a `FastDynCodeSpec` identifying ISA, instruction mode, and instruction byte order. The shared layer owns registration and lifecycle. Target-specific classifiers and decoders determine which encodings are admitted and preserve their architectural register and flag semantics.
 
-| Shared responsibility | Target-adapter responsibility |
+| Contract | Implemented behavior |
 | --- | --- |
-| Anchor and sequence identity | ISA and instruction-mode validation |
-| Registration before execution | Decoder/context integration |
-| Stable sequence ordering | Register and flag effects |
-| Plan generation and cache identity | Predication, delay slots, IT-state, and similar rules |
-| Bounds and resource policy | Control-flow, exception, and PC-relative semantics |
-| Clear unsupported-operation errors | Restoring original decode context after insertion |
+| Identity | Match both the numeric guest PC and the complete encoding profile. Registrations for different modes at one address do not reinterpret each other's bytes. |
+| Ownership | Copy the descriptor and byte buffer during registration. The caller does not need to keep its buffer alive. |
+| Ordering | Apply matching fragments in registration order before the original instruction. |
+| Lifetime | Seal registration when guest translation begins. Ordinary TB invalidation preserves the registry, and retranslation emits the matching fragments again. |
+| Bounds | Limit each fragment and all matching fragments at a site/profile to 128 decoded instructions and 2048 input bytes. Both bounds apply. |
+| Validation | Check descriptors, structure, and limits at registration; complete checks involving the live frontend, mode, extensions, and execution state during translation. Unsupported cases fail without a callback or interpreter fallback. |
 
-The first implementation can support a limited instruction subset on one target while retaining this general API. Supporting another architecture should add an adapter and conformance tests, not redefine the public interface around ARM register names or Thumb instruction widths.
+The supported profiles span A32, Thumb, A64, x86, and RISC-V. Their admitted instruction subsets differ. Portability means selecting a supported target profile and valid encodings for it; it does not mean reusing one machine-code byte array across ISAs. The [JIT patcher support table](../advanced/jit-patcher.md) gives the concrete boundaries.
 
-## A useful first milestone
+## Preserve the intended observation boundary
 
-Begin with deterministic straight-line register operations that the adapter can translate through its existing frontend. Register the insertion plan before execution, reject unsupported anchors or encodings, and emit the original instruction exactly once after the injected sequence.
+A fragment deliberately changes architectural state. Its register and flag effects can affect the original instruction, including the conditions under which that instruction acts. The implementation rejects matching Thumb insertions on an IT instruction or in active IT/ECI/ICI continuation state instead of assuming a universal predication rule.
 
-This milestone avoids exposing the entire JIT to an extension author. The caller supplies familiar machine instructions; FastDyn controls their admission and the translator owns their meaning. Existing virtual callbacks remain appropriate for complex host-side behavior that does not benefit from this route.
+The existing start-of-instruction observer runs before the fragments. The supported same-site observer classification is explicit; an arbitrary callback is not assumed to be read-only. Conflicting PC changes, detours, or unclassified callbacks are rejected before the affected TB executes.
 
-The initial contract should explicitly reject instructions or anchor contexts whose effects cannot yet be preserved, including relevant branch, exception, PC-relative, or predication cases. An unsupported sequence should produce an explanation at preparation time. Quietly interpreting it differently would make the interface difficult to trust.
+Fragment operations do not add original guest instructions to plugin enumeration or `icount`. This preserves that counting boundary while allowing the fragment's effects to change the firmware's subsequent execution path. It is not a promise that the experiment's overall instruction count or time remains unchanged.
 
-## Semantics that need explicit decisions
+An exception retry that reaches the anchor again runs its fragments again. The contract is execution at the site, not exactly one fragment execution per retired original instruction. A test should therefore examine the relevant exception and retry behavior as well as the ordinary path.
 
-**Predication and execution conditions.** Specify whether an insertion inherits the anchor's execution predicate. A practical initial adapter can reject predicated or delay-slot-sensitive anchors until that behavior is defined. An insertion must not accidentally execute when the original instruction is architecturally skipped.
+## Work outside the current contract
 
-**PC-relative operations.** A sequence's decode offset is not automatically a valid guest-visible PC. Literal loads, address computations, and branches need a documented address policy. Initially rejecting these instructions is safer than silently deriving a value from an imaginary location in the firmware.
+The implemented subset excludes guest-memory operations, branches and other guest control transfers, privileged operations, floating point, and vectors. It also excludes live replacement/removal, automatic register preservation, host-state bindings, and a public TCG/IR interface. A plugin that needs those behaviors must use another supported mechanism or extend the implementation and its tests first.
 
-**Memory faults and exceptions.** If memory instructions become supported, preserve guest address translation, access permissions, ordering, and exception behavior. Diagnostic attribution can name the original anchor and the injected sequence offset without pretending those bytes exist in guest memory. Define partial-effect, restart, and interrupt-boundary semantics before admitting faulting sequences: returning to the same anchor must not accidentally repeat already committed effects.
+This distinction matters for [automatic MMIO optimization](automatic-mmio.md): register-only guest fragments do not by themselves implement shared device-state access or prove a peripheral read is safe to replace. The [existing inline device path](../advanced/inline-device-modeling.md) has its own operation and backing-state contract.
 
-**Time and observation.** Define whether injected operations affect instruction counts, coverage, stepping, and guest time. An insertion used for instrumentation should not silently change a controller's time base. An insertion intended to model work may need a different, explicit policy.
+## Source guide
 
-**Caching.** Translation blocks must correspond to the insertion plan that produced them. The first milestone can make plans immutable for the run. If later versions allow replacement, the affected cached translations must be invalidated; updating a host-side list alone does not change already translated code.
+- [Guest instruction fragment contract](https://github.com/boardrunner2049/FastDyn/blob/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c/docs/GuestInstructionFragments.md)
+- [Native SDK declaration](https://github.com/boardrunner2049/FastDyn/blob/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c/include/fastdyn_runtime.h)
+- [QEMU frontend, registration, and translation changes](https://github.com/boardrunner2049/FastDyn/blob/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c/patches/qemu-fastdyn-insn-fragments.patch)
+- [Public FastDyn plugin smoke](https://github.com/boardrunner2049/FastDyn/blob/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c/tests/integration/run_fastdyn_guest_code_fragment_smoke.sh)
+- [Direct-QEMU architecture matrix](https://github.com/boardrunner2049/FastDyn/blob/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c/tests/integration/run_guest_code_fragments_smoke.sh)
 
-## What establishes a correct implementation
-
-A demonstration should show that the injected effects occur in order, the original instruction still executes once, and original code addresses and image bytes remain unchanged. Exercise multiple sequences at one anchor, repeated execution of a cached block, rejection paths, and a long straight-line sequence.
-
-A performance claim needs to establish whether the supported insertion stays in translated code, whether it introduces an exit or helper, and what cost remains. The property worth pursuing is precise: an admitted sequence becomes part of the translation and avoids a runtime callback when its semantics permit that.
-
-## Existing foundations
-
-- [Current modifier and translation instrumentation](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/core/core.c)
-- [Current virtual/modifier contract](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/docs/VirtualsAndModifiers.md)
-- [Native extension SDK](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/include/fastdyn_runtime.h)
-- [QEMU dependency pin](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/.gitmodules)
-
-These sources establish the current extension points. The general insertion interface and its semantics above are proposed work.
+The tests establish what the repository checks. They were inspected for this documentation update, not rerun as a new runtime qualification or performance experiment.

@@ -83,7 +83,7 @@ A polling loop must still permit the time and event progress on which its status
 
 ## What FastDyn already provides
 
-The inspected main branch has a five-field `finline` access map and native `LOAD_IO`/`STORE_IO` registration. That path addresses a single `gpio_memory[0x400]` buffer; its parsed device label does not yet select arbitrary model state. It is a useful implementation foundation with a narrower contract than the proposed model analyzer.
+The inspected main branch has a five-field `finline` access map and native `LOAD_IO`/`STORE_IO` registration. That path addresses a single `gpio_memory[0x400]` buffer; its parsed device label does not yet select arbitrary model state. The [inline device modeling chapter](../advanced/inline-device-modeling.md) documents that existing path and its setup in detail. It is a useful implementation foundation with a narrower contract than the proposed model analyzer.
 
 The existing modifier language also has restrictions, including the current absolute-memory path's M-profile address check. The general optimizer should therefore target an explicit admitted operation or adapter, rather than assume every MMIO replacement can be expressed by an unrestricted existing modifier.
 

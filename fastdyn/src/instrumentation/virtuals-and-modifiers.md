@@ -79,7 +79,7 @@ Here `15` is the exception vector and `1000000` is the period in nanoseconds. Th
 | `dyninst_lib` | ELF file | Load an ELF through the QEMU plugin API |
 | `dumplog` | `logger-index:file` | Write an internal logger buffer |
 
-`dyninst` is a runtime memory-loading operation. It is not the proposed translator-decoded insertion API. Explore available user-facing features with `fastdyn help virtuals --no-browse` and `fastdyn help modifiers --no-browse`.
+`dyninst` is a runtime memory-loading operation. The newer [JIT patcher](../advanced/jit-patcher.md) instead registers guest instruction bytes during plugin initialization and emits admitted fragments through the translator without writing those bytes into guest memory. Explore the virtual and modifier catalog with `fastdyn help virtuals --no-browse` and `fastdyn help modifiers --no-browse`; the fragment API is a native runtime SDK facility.
 
 ## Modifier grammar
 
@@ -117,7 +117,7 @@ For an unexpected result, inspect `virtuals/virtuals.txt` and `virtuals/modifier
 
 The five fields are hexadecimal PC, direction, device label, hexadecimal offset, and hexadecimal register slot. Direction accepts `R`/`READ` and `W`/`WRITE`, case-insensitively. The first matching record for a PC is used. The table has no transaction-width field; admitted register and access semantics belong to the patched backend.
 
-The present translation path uses the offset into a single 1 KiB `gpio_memory` buffer and does not select a backing region from the device label. Keep every access within that buffer: the native table reader does not bounds-check the offset. This is specialized infrastructure, not a ready-made optimizer for arbitrary peripheral models. See [automatic MMIO optimization](../designs/automatic-mmio.md) for the planned analyzer and correctness contract.
+The present translation path uses the offset into a single 1 KiB `gpio_memory` buffer and does not select a backing region from the device label. Keep every access within that buffer: the native table reader does not bounds-check the offset. The hook runs before the original instruction; it does not suppress that instruction by itself. The [inline device modeling chapter](../advanced/inline-device-modeling.md) explains the backend's transfer width, an explicit same-site PC modifier for skipping the original MMIO, and the required control-flow checks. See [automatic MMIO optimization](../designs/automatic-mmio.md) for the planned model analyzer.
 
 ## Source guide
 

@@ -1,6 +1,6 @@
 # Source map and documentation index
 
-This book is grounded in the FastDyn source revision **`f9666d7f518c373e89831d8e14a6371a27fe6436`**. The links below are pinned to that revision so a later change to `main` does not silently change the evidence behind an explanation.
+The core chapters and original documentation index below retain the FastDyn baseline **`f9666d7f518c373e89831d8e14a6371a27fe6436`**. The Advanced section was reviewed at **`5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`**, with separate backend/frontend pins where required. Links identify the recorded revision so a later change to `main` does not silently change the evidence behind an explanation.
 
 The book organizes the material by reader workflow and system boundary. The original pages, target-specific notes, and example assets remain useful for detailed port work. A mapping below identifies the new chapter that explains the topic; it does not mean every historical command or measured result has been repeated or revalidated.
 
@@ -12,9 +12,20 @@ Older design documents can describe intent or an earlier implementation. Where t
 
 FastDyn's submodules have their own revisions. The top-level revision pins their gitlinks; check those recorded commits before attributing behavior from a newer upstream QEMU, LibVIO, Rumoca, or model library to this snapshot.
 
+## Advanced execution sources
+
+| Book chapter | Implementation sources and scope |
+| --- | --- |
+| [Supercache](../advanced/supercache.md) | Separately pinned QEMU Supercache implementation and PX4 frontend cache-management code. The chapter distinguishes these from main's older QEMU gitlink. |
+| [Inline device modeling](../advanced/inline-device-modeling.md) | Main `5b8bf3d` access-map preparation, native `LOAD_IO`/`STORE_IO` registration, GPIO backing state, and the pinned QEMU lowering. This is the existing manual mechanism. |
+| [JIT patcher](../advanced/jit-patcher.md) | [GuestInstructionFragments.md](https://github.com/boardrunner2049/FastDyn/blob/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c/docs/GuestInstructionFragments.md), native SDK, tracked QEMU patch, and shipped plugin/probes at `5b8bf3d`. |
+| [Translation insertion design](../designs/translation-insertion.md) | Implemented address, lifecycle, admission, and observation contracts for guest instruction fragments; retained at its original URL. |
+
+The source guides in these chapters pin the exact files used. The review does not silently promote older design proposals, legacy example configurations, or branch-only frontend keys into supported main-branch workflows.
+
 ## Earlier pages in `docs/`
 
-All 31 Markdown pages present in the source snapshot's `docs/` directory are indexed here.
+All 31 Markdown pages present in the original `f9666d7` snapshot's `docs/` directory are indexed here. The newer guest-fragment documentation is mapped in the Advanced table above.
 
 | Original source | New book chapter | Material to retain |
 | --- | --- | --- |
