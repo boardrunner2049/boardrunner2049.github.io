@@ -6,6 +6,15 @@
   --links: #963e25;
 }
 
+/* Keep the custom header above mdBook's overlapping menu/hover placeholder. */
+.page {
+  margin-block-start: 0;
+}
+
+#mdbook-menu-bar-hover-placeholder {
+  margin-block-end: calc(0px - var(--menu-bar-height));
+}
+
 .site-tabs {
   display: flex;
   flex-wrap: wrap;
