@@ -63,6 +63,12 @@ The bundled configuration changes a function argument to `3`, prints the observe
 | Work with advanced execution mechanisms | [Supercache](advanced/supercache.md), [inline device modeling](advanced/inline-device-modeling.md), [experimental automatic MMIO](designs/automatic-mmio.md), [JIT patcher](advanced/jit-patcher.md) |
 | Explore the next capabilities | [Function execution](designs/function-execution.md), [ESCape32](designs/escape32.md) |
 
+## Contact
+
+For questions about FastDyn, feedback on this book, or collaboration, contact **Arslan Khan** at [arslankhan@psu.edu](mailto:arslankhan@psu.edu).
+
+To contribute documentation, see the [contribution guide](maintainers/contributing.md).
+
 ## Revision and evidence
 
 This edition was prepared on **11 November 2026**. Core chapters retain the FastDyn baseline [`f9666d7`](https://github.com/boardrunner2049/FastDyn/commit/f9666d7f518c373e89831d8e14a6371a27fe6436). The JIT patcher and manual inline lab are pinned to [`5b8bf3d`](https://github.com/boardrunner2049/FastDyn/commit/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c). The automatic MMIO workflow and related API additions were reviewed at [`a38af40`](https://github.com/boardrunner2049/FastDyn/commit/a38af408451394ea2f41be1e9cf1e96bc46c370f); that implementation is experimental and has the correctness limits recorded in its chapter. Supercache requires the separate frontend/backend revisions identified in its chapter. Each source guide records its implementation evidence; reviewing one feature at a newer revision does not revalidate every older chapter. Proposed extensions remain separate from implemented workflows.

@@ -4,6 +4,10 @@ A useful contribution helps a reader complete an experiment or understand an imp
 
 Handbook source changes belong in [boardrunner2049/boardrunner2049.github.io](https://github.com/boardrunner2049/boardrunner2049.github.io/tree/main/fastdyn/src), under `fastdyn/src/`. This repository builds the book with mdBook and publishes it at `/fastdyn/` as part of the project's GitHub Pages site.
 
+## Contact
+
+For questions about contributing to the FastDyn book, contact **Arslan Khan** at [arslankhan@psu.edu](mailto:arslankhan@psu.edu).
+
 ## Choose the right chapter
 
 User workflows belong in getting started, instrumentation, devices, simulation, and analysis. Advanced execution mechanisms belong in advanced; API and extension contracts belong in extending and reference. Architectural explanations should identify component responsibilities and show how a decision affects execution. When a proposal becomes implemented, update its status, link the practical chapter, and move it out of Proposed extensions in `SUMMARY.md`. Keep an existing URL when it remains useful as design rationale.
