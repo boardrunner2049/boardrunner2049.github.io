@@ -36,7 +36,7 @@ Read [Physics and FMUs](simulation/physics-and-fmu.md), then [Flight controllers
 
 ### Scale experiments and grow the framework
 
-Use `fastdyn swarm` for independent workers, and the co-simulation controller/slave facilities for experiments that coordinate guest progress. Add explicit communication and plant coupling when the experiment contains interacting firmware instances. [Multiple firmwares](simulation/multiple-firmwares.md) explains these distinct arrangements.
+Use `fastdyn swarm` for independent workers, and [FastDyn as a secondary simulator](advanced/fastdyn-as-secondary.md) when an external controller grants guest execution time. Add explicit communication and plant coupling when the experiment contains interacting firmware instances. [Multiple firmwares](simulation/multiple-firmwares.md) explains these arrangements. The [Tempo chapter](advanced/tempo.md) covers the companion scheduler's implemented federation compiler, typed routing, and mock-participant examples.
 
 Extensions can use the Python run API, a preparation plugin, a native runtime plugin, a peripheral model, or a physics adapter. [The system model](architecture/system-model.md) helps choose the smallest appropriate extension point.
 
@@ -61,7 +61,7 @@ The bundled configuration changes a function argument to `3`, prints the observe
 | Run a controller against a plant | [Physics and FMUs](simulation/physics-and-fmu.md), [flight controllers](simulation/flight-controllers.md) |
 | Build an analysis or downstream tool | [Python API](extending/python-api.md), [virtual plugins](extending/virtual-plugins.md), [host analysis](extending/host-analysis.md) |
 | Work with advanced execution mechanisms | [Supercache](advanced/supercache.md), [inline device modeling](advanced/inline-device-modeling.md), [experimental automatic MMIO](designs/automatic-mmio.md), [JIT patcher](advanced/jit-patcher.md), [hot-path optimizations](advanced/runtime-fast-paths.md) |
-| Explore the next capabilities | [Function execution](designs/function-execution.md), [ESCape32](designs/escape32.md) |
+| Control simulation progress and study coordination | [FastDyn as a secondary simulator](advanced/fastdyn-as-secondary.md), [Tempo](advanced/tempo.md) |
 
 ## Contact
 
@@ -71,7 +71,7 @@ To contribute documentation, see the [contribution guide](maintainers/contributi
 
 ## Revision and evidence
 
-This edition was refreshed on **15 November 2026**, reviewing FastDyn main through **`e44dca2` (12 November 2026)**. Core chapters retain the FastDyn baseline [`f9666d7`](https://github.com/boardrunner2049/FastDyn/commit/f9666d7f518c373e89831d8e14a6371a27fe6436). The JIT patcher and manual inline lab are pinned to [`5b8bf3d`](https://github.com/boardrunner2049/FastDyn/commit/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c). The automatic MMIO correctness fixes and hot-path optimizations were reviewed at [`e44dca2`](https://github.com/boardrunner2049/FastDyn/commit/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576); automatic substitution remains bounded by its conservative admission and configuration gates. The [hot-path chapter](advanced/runtime-fast-paths.md) documents the independent MMIO saved-PC exporter and ARM32 fixed-PC chaining. Supercache requires the separate frontend/backend revisions identified in its chapter. Each source guide records its implementation evidence; reviewing one feature at a newer revision does not revalidate every older chapter. Proposed extensions remain separate from implemented workflows.
+This edition was refreshed on **16 November 2026**, reviewing FastDyn main through **`e44dca2` (12 November 2026)** and Tempo at **`771b996`**. Core chapters retain the FastDyn baseline [`f9666d7`](https://github.com/boardrunner2049/FastDyn/commit/f9666d7f518c373e89831d8e14a6371a27fe6436). The JIT patcher and manual inline lab are pinned to [`5b8bf3d`](https://github.com/boardrunner2049/FastDyn/commit/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c). Automatic MMIO, hot-path optimizations, and the secondary-simulator workflow are reviewed at [`e44dca2`](https://github.com/boardrunner2049/FastDyn/commit/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576). The [Tempo chapter](advanced/tempo.md) records the implemented scheduler and compiler at its [separate source revision](https://github.com/boardrunner2049/tempo/tree/771b99650004fcbf3ab216970cf8fd9fae91aa6c). Supercache requires the separate frontend/backend revisions identified in its chapter. Each source guide records its implementation evidence; reviewing one feature at a newer revision does not revalidate every older chapter. The book covers implemented capabilities and their current limits.
 
 The book was checked against source, configuration examples, and test programs. It is not a new measurement campaign. See the [capability status](reference/status.md) and [testing guide](analysis/testing-and-reproducibility.md) for the scope of an experiment and the evidence to retain.
 

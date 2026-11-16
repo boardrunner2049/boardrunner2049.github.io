@@ -65,7 +65,7 @@ Configure the owning plugin rather than manually reproducing its schema and inte
 | Mechanism | How it is selected | Build/runtime requirement |
 | --- | --- | --- |
 | Inline modifiers | CPU `modifiers` array | Patched target backend; register/width semantics are architecture-specific |
-| Specialized inline I/O | `[Machine].finline` | Existing static access-map path; not the planned general automatic optimizer |
+| Specialized inline I/O | `[Machine].finline` | Static access-map path with explicit backing state and original-instruction handling; see [inline device modeling](../advanced/inline-device-modeling.md) |
 | Device handlers | `[Device.Models.*]` and handler assignments | Device-model build; hardware paths also require libhw |
 | Vehicle physics | `[FMU]`, physics options, and controller profiles | `PHY=true`; `FMU=true` for FMUs; `FLIGHT_CONTROLLERS=true` for controller adapters |
 | Legacy Gazebo physics | Selected Gazebo backend | `PHY=true LIBGZ=true` and matching Gazebo dependencies |

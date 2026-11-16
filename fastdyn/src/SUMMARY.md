@@ -57,11 +57,8 @@
 * [Hot-path optimizations](advanced/runtime-fast-paths.md)
 * [JIT patcher](advanced/jit-patcher.md)
   * [Translation insertion design](designs/translation-insertion.md)
-
-# Proposed extensions
-
-* [Execute a function directly](designs/function-execution.md)
-* [Flight controller and ESCape32](designs/escape32.md)
+* [FastDyn as a secondary simulator](advanced/fastdyn-as-secondary.md)
+* [Tempo](advanced/tempo.md)
 
 # Reference
 

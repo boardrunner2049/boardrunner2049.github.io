@@ -15,7 +15,9 @@ A productive FastDyn experiment starts with a question that has a visible result
 | Can I compare against a real peripheral? | Passthrough or twintrace | Probe-backed interactions or a replay record |
 | Does a controller behave correctly in a scenario? | An appropriate flight-controller/FMU configuration | Sensor/controller/actuator progress and a scenario outcome |
 | How do I repeat many independent trials? | `fastdyn loop` or `fastdyn swarm` | Separate trial or worker artifacts |
-| How do several firmware instances interact? | Co-simulation plus explicit links | Ordered communication and coupled plant evolution |
+| Can an external controller pace firmware execution? | [FastDyn as a secondary simulator](../advanced/fastdyn-as-secondary.md) | QMP time grants, observed stops, and reported guest time |
+| How do I synchronize several firmware instances? | [Multiple firmwares](../simulation/multiple-firmwares.md) and the lockstep utility | Guests paused at common time boundaries; connections are experiment-specific |
+| How does typed routing and scheduling work in Tempo? | [Tempo's mock federation](../advanced/tempo.md) | Compiled connections, participant progress, routed values, and trace records |
 
 The configuration examples are entry points, not interchangeable board descriptions. Their addresses, firmware images, register conventions, and optional dependencies belong to the named experiment.
 

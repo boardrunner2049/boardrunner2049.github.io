@@ -14,7 +14,7 @@ The current tree contains two main workflows. Native LibAFL/AFLNet integration d
 
 A useful harness begins after the required initialization and ends after one meaningful input has been processed. That avoids repeatedly paying for unrelated boot work while retaining the state required by the selected behavior.
 
-## Task-loop fuzzing, including the chaos direction
+## Task-loop fuzzing
 
 Embedded tasks often run forever. FastDyn's existing virtuals and modifiers can select an iteration boundary, redirect execution, arrange inputs, and return to a repeatable point. The native fuzzer supplies snapshot and synchronization callbacks; the schema layer can install those callbacks from JSON.
 
@@ -26,7 +26,7 @@ For a task or loop, the practical workflow is:
 4. Inject the inputs that the loop consumes, then collect outcomes after one iteration.
 5. Replay interesting inputs and check whether the resulting state is feasible for the real system.
 
-This implements the execution machinery behind the task-centric approach described in `docs/chaos.md`. Automatically discovering every task, deriving its complete dependencies, and isolating arbitrary firmware loops is a broader design goal, not an established universal capability. Binary loop and MMIO analyses can provide evidence; they do not remove the need to validate the harness.
+The implemented controls support task-focused execution with explicitly selected boundaries and state. They do not automatically discover every task, derive its complete dependencies, or isolate arbitrary firmware loops. Binary loop and MMIO analyses can provide evidence; the harness still needs validation against the selected firmware.
 
 Coverage PCs are logged from translated code into a circular buffer and drained by a tracer thread. That keeps the event producer in the translated path and supports an in-process LibAFL consumer. The current buffer and synchronization implementation should not be described as a proven lossless logger for arbitrary producer rates. Coverage identifies execution progress; it is not by itself a complete record of every instruction or scheduling event.
 

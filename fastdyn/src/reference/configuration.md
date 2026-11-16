@@ -43,7 +43,7 @@ exact_budget_stop = false
 
 `timer_irq_period_ns` selects the periodic board interrupt interval when used by the configured runtime. The maintained vehicle profiles use 1,000,000 ns. This is a simulation-time setting, not a claim that the host executes a step in one millisecond.
 
-`exact_budget_stop` controls how the co-simulation budget mechanism stops at its deadline. It defaults to false. Use the [multiple-firmware chapter](../simulation/multiple-firmwares.md) for the master/slave timing contract; enabling this field alone does not install an inter-device connection.
+`exact_budget_stop` is parsed as a co-simulation stopping-mode option and defaults to false. At the reviewed `e44dca2` revision, its native enabling call is commented out, so setting this field alone does not activate exact mode. Select exact stopping through the controller's `--exact` option or `BudgetMaster(..., exact_stop=True)`, which sends QMP `set-budget-mode`. See [FastDyn as a secondary simulator](../advanced/fastdyn-as-secondary.md) for the complete setup, timing contract, and validation limits.
 
 ### Coverage and fuzzing
 
@@ -232,6 +232,8 @@ Core configuration is not a uniformly closed schema: a key found in an old examp
 - [Core TOML parsing and defaults](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/toml_parser.py)
 - [Memory, CPU, and device data structures](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/fastdyn.py)
 - [QEMU launch and generated options](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/targets/qemu_target.py)
+- [Current exact-budget option handling](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/core/core.c)
+- [Explicit QMP stopping-mode selection](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/utils/fastdyn_cosim.py)
 - [FMU selection and build resolution](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/fmu_build.py)
 - [Helper and profiling configuration](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/runtime_config.py)
 - [Vehicle configuration example](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/configs/copter462.toml)

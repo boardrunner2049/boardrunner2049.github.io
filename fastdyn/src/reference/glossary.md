@@ -48,10 +48,14 @@ The terms below distinguish the firmware being executed, the tools preparing its
 | **Guest virtual time** | QEMU's simulation clock, exposed by FastDyn in nanoseconds. How it advances depends on the configured timing mode; it is not automatically a cycle-accurate MCU clock. | [Multiple firmwares](../simulation/multiple-firmwares.md) |
 | **Plant time** | The time to which a physical model has been advanced. The integration policy aligns plant progress with guest time; the FMI boundary may express times in seconds while FastDyn scheduling uses nanoseconds. | [Physics and FMU](../simulation/physics-and-fmu.md) |
 | **Instruction count / `icount`** | QEMU `icount` relates instruction progress to virtual time. It is separate from FastDyn's `virtual_icount()` counter, whose current wiring depends on twintrace. Neither establishes real hardware instruction latency. | [Configuration](configuration.md) |
-| **Slice** | A bounded interval of virtual execution granted to a co-simulation slave by its controller. The stopping policy determines whether the slave stops exactly at the budget deadline or at an allowed boundary. | [Multiple firmwares](../simulation/multiple-firmwares.md) |
+| **Secondary simulator / co-simulation slave** | A FastDyn guest whose execution is paced by an external controller through QMP time grants. The shipped client is `BudgetMaster`; state exchange and physical-model ownership remain explicit parts of the experiment. | [Secondary execution](../advanced/fastdyn-as-secondary.md) |
+| **Slice** | A bounded interval of virtual execution granted to a secondary by its controller. Completion is established by a stop event and observed time; the stopping mode and instruction-time granularity determine the reached boundary. | [Secondary execution](../advanced/fastdyn-as-secondary.md) |
 | **Physics step** | An advancement interval used by the physical model or its integration loop. It is separate from a TB and from a controller's execution slice, even when the experiment coordinates these intervals. | [World models](../simulation/world-models.md) |
 | **Lockstep** | Coordinated advancement in which participants exchange required inputs or results at defined synchronization boundaries. Synchronizing clocks alone does not define the data connections between participants. | [Multiple firmwares](../simulation/multiple-firmwares.md) |
 | **Swarm** | FastDyn's orchestration of isolated copies of a configuration with distinct worker resources. It scales independent experiments; cross-worker device or physical connections must be defined separately. | [CLI reference](cli.md) |
+| **Tempo** | The companion native co-simulation scheduler and federation compiler, configured through Python or TOML. The reviewed revision executes mock participants. | [Tempo](../advanced/tempo.md) |
+| **Federation** | In Tempo, a configured collection of participant instances, typed input/output ports, connections, and scheduling settings, compiled into a native execution plan. | [Tempo](../advanced/tempo.md) |
+| **Microstep** | Tempo's ordering index for activity at one physical timestamp. A tag combines time and microstep so same-time work can be processed in a defined order subject to the configured iteration bound. | [Tempo](../advanced/tempo.md) |
 
 ## Analysis and testing
 
@@ -66,7 +70,8 @@ The terms below distinguish the firmware being executed, the tools preparing its
 - [Native SDK and architecture contracts](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/virtuals/README.md)
 - [Automatic MMIO pipeline at a38af40](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/docs/AutomaticMMIOOptimization.md)
 - [Host analysis contracts](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/docs/HostAnalysisRuntimeGuide.md)
-- [Co-simulation semantics](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/docs/CoSimulationSlave.md)
+- [Co-simulation control implementation](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/utils/fastdyn_cosim.py)
+- [Tempo federation and scheduling interfaces](https://github.com/boardrunner2049/tempo/blob/771b99650004fcbf3ab216970cf8fd9fae91aa6c/README.md)
 - [FMU runtime preparation](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/fmu_runtime.py)
 - [Schema and snapshot semantics](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/virtuals/fuzzer/schema/README.md)
 - [Native coverage and state handling](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/virtuals/fuzzer/fuzz.c)

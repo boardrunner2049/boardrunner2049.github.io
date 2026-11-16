@@ -11,7 +11,7 @@ Choose the mechanism according to the experiment:
 | Keep several guests at common boundaries | `cosim_lockstep.py` | Base slave configuration and time quantum |
 | Model communicating devices or firmware sharing a plant | A master plus explicit device/transport connections | Communication semantics, exchange policy, and shared state ownership |
 
-The existing lockstep example synchronizes time. It does not automatically connect UARTs, radios, buses, or actuators between its guests.
+The existing lockstep example synchronizes time. It does not automatically connect UARTs, radios, buses, or actuators between its guests. The Advanced chapter [FastDyn as a secondary simulator](../advanced/fastdyn-as-secondary.md) gives the complete setup and QMP lifecycle at `e44dca2`. [Tempo](../advanced/tempo.md) covers a separate scheduler and its implemented mock-participant workflows.
 
 ## Launch an isolated campaign
 
@@ -45,7 +45,7 @@ The supervisor checks those ports before launch. A custom helper or device model
 
 ## Drive one guest as a slave
 
-The shipped slave example uses the RLC world model, so complete [World models](world-models.md) first. Its key machine settings are:
+The shipped slave example uses the RLC world model. Complete the [secondary simulator setup](../advanced/fastdyn-as-secondary.md#run-the-supplied-rlc-guest), including its pinned backend and world build, before using these commands. Its key machine settings are:
 
 ```toml
 [Machine]
@@ -62,7 +62,7 @@ Start the guest and its master in separate terminals:
 fastdyn run -c configs/cosim_slave.toml -o out/cosim
 
 # Terminal 2
-python3 utils/fastdyn_cosim.py /tmp/fastdyn-cosim.qmp --slice-ms 20 --slices 6
+python3 utils/fastdyn_cosim.py /tmp/fastdyn-cosim.qmp --exact --slice-ms 20 --slices 6
 ```
 
 The guest starts paused. The master grants slices and reports the virtual time actually reached. A pending slice is asynchronous: the immediate response to `run-for` is an acknowledgment of the grant, not evidence that execution has finished.
@@ -73,13 +73,13 @@ The patched QEMU provides three relevant commands:
 
 | QMP command | Meaning |
 | --- | --- |
-| `run-for` with `budget` in nanoseconds | Add a positive duration to the cumulative execution deadline and resume |
+| `run-for` with `budget` in nanoseconds | Add a positive duration to the maintained cumulative execution deadline and resume |
 | `query-budget` | Read `totalbudget`, actual `currenttime`, and whether exact mode is enabled |
 | `set-budget-mode` with `exact` | Select the stopping mode for the current run |
 
 The master waits for the `STOP` event after each grant, then queries the budget. If a guest terminates instead, the master must handle shutdown rather than waiting indefinitely for a pause.
 
-In the default stopping mode, the guest can stop beyond the deadline. The cumulative budget still tracks the granted time, but the observation instant can differ from that budget. `exact_budget_stop = true`, or the CLI's `--exact`, selects synchronous stopping at the virtual-time deadline. This is a synchronization property of the emulator, not a hardware-cycle accuracy guarantee.
+In the default stopping mode, the guest can stop beyond the deadline, and the backend can adjust its maintained deadline when it detects exhaustion after that time. Read both the deadline and actual reached time after each stop. The CLI's `--exact`, or `BudgetMaster(..., exact_stop=True)`, actively selects synchronous stopping through QMP. At `e44dca2`, the native enabling call for `exact_budget_stop = true` is commented out; the configuration field alone is insufficient. Exact stopping is a synchronization property of the emulator, subject to its instruction-time granularity, not a hardware-cycle accuracy guarantee.
 
 For a custom Python master, this is runnable from the repository root while the guest above is waiting:
 
@@ -114,13 +114,14 @@ The budget interface is monotonic and does not provide rewind. Likewise, restori
 
 ## Verify the chosen property
 
-Use `tests/integration/courbet_swarm_smoke.sh` to exercise parallel vehicle launches and `tests/integration/run_cosim_slave_smoke.sh` to exercise budget stops and lockstep after their prerequisites are built. A successful swarm check establishes launch isolation; a successful budget check establishes synchronization. Communication correctness and physical fidelity require checks for the connections and models you add.
+The repository provides `tests/integration/courbet_swarm_smoke.sh` for parallel vehicle launches and `tests/integration/run_cosim_slave_smoke.sh` for budget stops and lockstep. At `e44dca2`, the latter's exact-mode stage relies on the inactive configuration-only switch; use the explicit QMP selection shown above for a controlled run. See the [secondary chapter's validation limits](../advanced/fastdyn-as-secondary.md#lifecycle-and-validation-limits) for what was checked. A successful swarm check establishes launch isolation; a successful budget check establishes synchronization. Communication correctness and physical fidelity require checks for the connections and models in the experiment.
 
 ## Source guide
 
 - [Worker planning, ports, and supervision](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/swarm.py)
-- [BudgetMaster and single-guest CLI](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/utils/fastdyn_cosim.py)
-- [Multi-guest barrier example](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/utils/cosim_lockstep.py)
-- [Slave-mode configuration](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/configs/cosim_slave.toml)
-- [QEMU budget implementation patch](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/patches/qemu-fastdyn-plugin-icount.patch)
+- [BudgetMaster and single-guest CLI](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/utils/fastdyn_cosim.py)
+- [Multi-guest barrier example](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/utils/cosim_lockstep.py)
+- [Slave-mode configuration](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/configs/cosim_slave.toml)
+- [QEMU budget implementation patch](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/patches/qemu-fastdyn-plugin-icount.patch)
+- [Native exact-budget option handling](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/core/core.c)
 - [Exact-stop and lockstep integration checks](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/tests/integration/run_cosim_slave_smoke.sh)

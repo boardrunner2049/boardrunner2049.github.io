@@ -13,7 +13,7 @@ FastDyn supplies execution and experiment integration. Several related tools sup
 | BoardRunner | Learn and verify peripheral models from hardware evidence | Downstream model-generation workflow |
 | PhantomSmith | Automate firmware rehosting using the execution engine | Downstream orchestration and target adaptation |
 | Rumoca | Compile Modelica models used in the maintained FMI path | Model compilation and generated artifacts |
-| COMPOSE / CP Models | Own reusable physical and sensor models and their interfaces in the project's intended model architecture | Physics and sensor semantics, with FastDyn delivering values to firmware |
+| Tempo | Compile typed federations and coordinate participant time, routing, and synchronization | Separate native scheduler; the reviewed revision supplies mock participants |
 | `raw2elf` and `world` | Optional neighboring tooling for image preparation and physical-world integration | Their own repositories and explicitly configured adapters |
 
 The FastDyn source README documents BoardRunner, LibVIO, and PhantomSmith as separate projects. The implementation also pins optional dependencies and tools in `.gitmodules`. Their presence does not mean every dependency is required to run the minimal example.
@@ -26,13 +26,17 @@ Likewise, a firmware-analysis tool can use the Python API to prepare and run an 
 
 This separation is useful for research. Two synthesis strategies can be compared against the same execution machinery. A new instrumentation technique can use the same peripheral models. A physics-backed scenario can combine an established controller profile with a different plant while retaining the experiment's timing and data contracts.
 
-## COMPOSE and the firmware boundary
+## Physical models and the firmware boundary
 
-The project's agreed direction assigns the physical-model interface and reusable models to CP Models / COMPOSE, with [ModelicaCPSLibrary](https://github.com/boardrunner2049/ModelicaCPSLibrary) as the model repository. FastDyn consumes the physical and sensor outputs and delivers them at the selected firmware boundary. The long-term interface should remain useful to other consumers, including native simulation integrations.
+FastDyn's physics integration includes Modelica files, pinned Rumoca integration, controller adapters, and an FMI runtime. A physical model supplies state and observations; the configured firmware adapter determines how those values reach the guest. Use the [FMU chapter](../simulation/physics-and-fmu.md) for the executable workflow and its versioned prerequisites.
 
-The inspected FastDyn main revision still contains its own Modelica files, pinned Rumoca integration, controller adapters, and FMI runtime. This chapter records the architectural direction without claiming that every interface migration is complete. Use the current [FMU chapter](../simulation/physics-and-fmu.md) for executable instructions.
+The in-process FMU design allows a model to run inside the QEMU process. An optional viewer, telemetry bridge, or mission helper is a separate component with its own configuration and lifecycle.
 
-The in-process FMU design matters here. A model can be loaded by the application that needs it, so the plant itself does not require a separate simulator process. An optional viewer, telemetry bridge, or mission helper is a separate concern. An existing native simulator's JSON interface limitations should not define the expressiveness of the physical models or FastDyn's firmware-facing adapters.
+## External pacing and Tempo
+
+[FastDyn as a secondary simulator](../advanced/fastdyn-as-secondary.md) exposes execution budgets through patched QEMU's QMP interface. An external controller grants virtual time and observes stops; its data-exchange policy and any connections between guests remain explicit parts of the experiment.
+
+[Tempo](../advanced/tempo.md) implements a separate native scheduler, federation compiler, typed routing, and Python/TOML configuration. Its reviewed revision runs mock participants and contains no FastDyn or FMI adapter. The chapter's working examples exercise those shipped mocks.
 
 ## Where a contribution belongs
 
@@ -49,3 +53,5 @@ These rules are more than directory organization: they preserve the ability to c
 - [Ownership conventions](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/docs/CodingConventions.md)
 - [Public Python run API](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/runner.py)
 - [Maintained physics integration](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/virtuals/physics/README.md)
+- [Secondary execution controller](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/utils/fastdyn_cosim.py)
+- [Tempo implementation and public examples](https://github.com/boardrunner2049/tempo/blob/771b99650004fcbf3ab216970cf8fd9fae91aa6c/README.md)

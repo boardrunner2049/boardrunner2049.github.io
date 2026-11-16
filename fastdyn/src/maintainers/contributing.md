@@ -10,7 +10,7 @@ For questions about contributing to the FastDyn book, contact **Arslan Khan** at
 
 ## Choose the right chapter
 
-User workflows belong in getting started, instrumentation, devices, simulation, and analysis. Advanced execution mechanisms belong in advanced; API and extension contracts belong in extending and reference. Architectural explanations should identify component responsibilities and show how a decision affects execution. When a proposal becomes implemented, update its status, link the practical chapter, and move it out of Proposed extensions in `SUMMARY.md`. Keep an existing URL when it remains useful as design rationale.
+User workflows belong in getting started, instrumentation, devices, simulation, and analysis. Advanced execution mechanisms belong in advanced; API and extension contracts belong in extending and reference. Architectural explanations should identify component responsibilities and show how a decision affects execution. Add a capability when its implementation can be inspected, and connect it to a practical chapter. Keep an existing URL when it remains useful as design rationale for implemented behavior.
 
 Use the [source map](../reference/source-map.md) before adding a new page. It helps avoid creating a second explanation of an API that already has a natural home.
 
@@ -18,7 +18,7 @@ Use the [source map](../reference/source-map.md) before adding a new page. It he
 
 Read the current implementation and relevant tests, not only an older README. Add a short source guide with pinned links to the files that establish the chapter's contract. Use tests as evidence of what is asserted, and distinguish the existence of a test from a test result observed during the documentation change.
 
-The core implementation baseline is `f9666d7f518c373e89831d8e14a6371a27fe6436`; the JIT patcher and manual inline lab use `5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`. Automatic MMIO and the current MMIO/ARM32 hot-path changes are reviewed at `e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576`. Supercache additionally records separate frontend/backend revisions. Preserve chapter-level pins when updating only part of the book. For a branch-only feature, name the branch, pin the revision, and state the prerequisites and validation level. For an implemented experiment, distinguish available commands from established correctness. For a proposal, describe intended semantics and the existing foundations without presenting an invented API as current functionality.
+The core implementation baseline is `f9666d7f518c373e89831d8e14a6371a27fe6436`; the JIT patcher and manual inline lab use `5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`. Automatic MMIO, the current MMIO/ARM32 hot-path changes, and secondary execution are reviewed at `e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576`. Tempo uses `771b99650004fcbf3ab216970cf8fd9fae91aa6c`. Supercache additionally records separate frontend/backend revisions. Preserve chapter-level pins when updating only part of the book. For a branch-only feature, name the branch, pin the revision, and state the prerequisites and validation level. For an implemented experiment, distinguish available commands from established correctness. Keep the handbook limited to implemented capabilities, their prerequisites, validation evidence, and current limitations.
 
 If code and earlier documentation disagree, document the behavior the inspected implementation provides and keep the explanation useful to the reader. A handbook chapter should not become an unrelated backlog of every issue found during inspection.
 
@@ -50,7 +50,7 @@ For visual changes, edit root `site-theme.css` for shared colors and fonts, and 
 
 ## Maintain the diagrams
 
-The handbook currently contains six fenced Mermaid diagrams. They are built through `mdbook-mermaid`, so retain the `mermaid` fence and keep the diagram source with its chapter. The build installs the required generated JavaScript assets; contributors do not need to commit those assets.
+The handbook's fenced Mermaid diagrams are built through `mdbook-mermaid`, so retain the `mermaid` fence and keep the diagram source with its chapter. The build installs the required generated JavaScript assets; contributors do not need to commit those assets.
 
 Use diagrams when they explain a boundary, feedback loop, or branching workflow more clearly than prose. Keep each diagram focused and use short labels. Supporting details belong in the surrounding text. Tables work well for configuration fields, API mappings, and support differences.
 
