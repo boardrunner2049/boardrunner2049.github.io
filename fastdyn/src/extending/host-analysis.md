@@ -156,6 +156,12 @@ A session treats its image as immutable. It does not poll or hash the file to no
 
 Public analysis errors derive from `HostAnalysisError`, including `ImageAddressError`, `SymbolNotFoundError`, `AmbiguousSymbolError`, `DwarfQueryError`, and `UnsupportedTargetError`. Handle these at the consumer boundary with the configuration key or requested analysis in the diagnostic.
 
+## Host-model layout service at `e44dca2`
+
+The automatic-MMIO model extractor also uses the separately imported `fastdyn.host.llvm_layout.gep_offsets()` service, backed by libLLVM's C API. It parses constant GEP indices against the actual LLVM module data layout and returns unknown rather than guessing an offset if that proof is unavailable. This is an **analysis of the host-compiled device-model IR**, not a new generic ELF-firmware decoder; ordinary `AnalysisSession` users do not need libLLVM until the model-layout service is used. The optimized shared library links the same analyzed IR used to derive the metadata, avoiding mismatched `__PIC__`/`__OPTIMIZE__` conditionals.
+
+See the [implementation at `e44dca2`](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/src/fastdyn/host/llvm_layout.py) and the [automatic MMIO contract](../designs/automatic-mmio.md).
+
 ## Source guide
 
 - [Public analysis exports](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/host/__init__.py)

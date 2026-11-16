@@ -34,7 +34,19 @@ fastdyn -q run -c configs/minimal.toml -o out/validation/minimal
 
 Require the register result `Reg 0:0x00000003`, a `[BENCH][minimal]` record, and a successful exit. This exercises the configuration-to-QEMU path, a modifier, native virtual actions, and guest execution. It does not exercise active peripheral models, a complete RTOS workload, or physics.
 
-The push/PR workflow in `.github/workflows/ci.yml` builds the runtime, runs the unit suite, checks those minimal-run outputs, and runs the bundled FreeRTOS introspection smoke test.
+At [main `e44dca2`](https://github.com/boardrunner2049/FastDyn/commit/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576), the push/PR workflow also builds the five-QEMU-target matrix and runs the automatic MMIO six-case regression, fragment architecture and public-SDK smokes, constant-PC chaining smoke, the unit suite, the minimal run, and bundled FreeRTOS introspection. This exact [CI run](https://github.com/boardrunner2049/FastDyn/actions/runs/43180410321) reports success. CI's tested QEMU environment is not a physical board or an FMU mission.
+
+## Validate new hot-path optimizations
+
+Build from the [reviewed main snapshot](https://github.com/boardrunner2049/FastDyn/commit/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576) using the maintained `source ./setup.sh --build-qemu --qemu-targets arm-softmmu,aarch64-softmmu,x86_64-softmmu,riscv32-softmmu,riscv64-softmmu` command; the build must contain all five ordered QEMU patches. Then run:
+
+```bash
+tests/integration/run_fastdyn_mmio_opt.sh
+tests/integration/run_fastdyn_mmio_pc_equivalence.sh
+tests/integration/run_fastdyn_constant_pc.sh
+```
+
+The MMIO optimizer runner compares six baseline/optimized firmware outcomes, effects, aligned/unaligned fault behavior, selectors, and observer counts; `FASTDYN_MMIO_ARTIFACTS=/absolute/new/directory` retains a complete evidence tree. The saved-PC equivalence runner checks legacy register values against the scalar exporter across the documented target profiles; it is not the timed benchmark. The constant-PC runner checks A32/Thumb legacy equivalence, generated operations, and a live QEMU TB link, without timing thresholds. The [hot-path chapter](../advanced/runtime-fast-paths.md) distinguishes the separate optional performance runners and their prerequisites.
 
 ## Validate introspection against real guest execution
 
@@ -120,8 +132,8 @@ Hold logging, tracing, solver settings, input sequence, and stopping criteria co
 ## Source guide
 
 - [Unit-test conventions and commands](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/tests/unit/README.md)
-- [Default CI workflow](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/.github/workflows/ci.yml)
+- [Current CI workflow](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/.github/workflows/ci.yml)
 - [Bundled introspection smoke and path overrides](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/tests/integration/run_bundled_freertos_introspection_smoke.sh)
-- [Integration test guide](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/tests/integration/README.md)
+- [Current integration-test guide](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/tests/integration/README.md)
 - [Full vehicle and swarm workflow](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/.github/workflows/courbet-mission.yml)
 - [Memory reset and shutdown implementation](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/src/fastdyn/targets/qemu_target.py)

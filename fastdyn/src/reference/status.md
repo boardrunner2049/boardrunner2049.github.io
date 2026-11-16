@@ -1,6 +1,6 @@
 # Capability status
 
-This book records the source revision behind each explanation. Core chapters retain the FastDyn baseline `f9666d7f518c373e89831d8e14a6371a27fe6436`; the JIT patcher and manual inline lab use `5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`. Automatic MMIO and the related API additions were reviewed at main `a38af408451394ea2f41be1e9cf1e96bc46c370f`. Supercache has separate frontend/backend requirements in its chapter. Presence in source does not mean every combination was executed during documentation preparation, and separately pinned branch features are not silently treated as main-branch configuration options.
+This book records the source revision behind each explanation. Core chapters retain the FastDyn baseline `f9666d7f518c373e89831d8e14a6371a27fe6436`; the JIT patcher and manual inline lab use `5b8bf3ddb01d63a4d5f86701d358e390a950cb9c`. The latest reviewed main hot-path and automatic-MMIO changes are pinned to `e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576` (12 November 2026). Supercache has separate frontend/backend requirements in its chapter. Presence in source does not mean every combination was executed during documentation preparation, and separately pinned branch features are not silently treated as main-branch configuration options.
 
 ## Main-branch capabilities
 
@@ -11,9 +11,11 @@ This book records the source revision behind each explanation. Core chapters ret
 | PC-triggered virtuals | Native runtime callbacks selected during preparation/translation | [Virtuals and modifiers](../instrumentation/virtuals-and-modifiers.md) |
 | Register/memory modifiers | Current specialized inline operation grammar and target restrictions | [Virtuals and modifiers](../instrumentation/virtuals-and-modifiers.md) |
 | Manual inline device modeling | Explicit `finline` access map and a single fixed GPIO backing buffer; manual site selection and target-specific behavior | [Inline device modeling](../advanced/inline-device-modeling.md) |
-| Automatic MMIO optimization | Experimental at `a38af40`: model extraction, shared Thumb access discovery, live elder-state binding, and guarded load replacement. Review found admitted unsafe expressions, alignment-fault bypass, and missing MMIO observations; restrict evaluation to explicitly audited models and workloads. | [Automatic MMIO](../designs/automatic-mmio.md) |
+| Automatic MMIO optimization | Bounded, tested experimental path at `e44dca2`: ABI 2 effect/predicate/width analysis, live elder-state binding, and guarded Cortex-M Thumb read replacement. Alignment faults and active or later-registered observers remain on original dispatch; unsupported cases decline. Not a proof for arbitrary models; coverage/fuzzing disable substitution. | [Automatic MMIO](../designs/automatic-mmio.md) |
+| Saved-PC MMIO exporter | Main `e44dca2`: version-2 callbacks receive the existing saved PC as a scalar instead of allocating a GDB-style register buffer per access; still ordinary device dispatch | [Hot-path optimizations](../advanced/runtime-fast-paths.md) |
+| Constant-PC chaining | Main `e44dca2`: safe ARM32 A32/Thumb fixed immediate `r15` redirects can use QEMU TB chaining; same-page, mode, callback and slot restrictions with legacy fallback | [Hot-path optimizations](../advanced/runtime-fast-paths.md) |
 | JIT patcher | At `5b8bf3d`: immutable guest instruction fragments inserted before an original PC; explicit ISA/mode profiles and bounded register-only subsets | [JIT patcher](../advanced/jit-patcher.md) |
-| Shared host analysis | Lazy image, symbol, DWARF, decoding, and RTOS facts; at `a38af40`, cached constant-propagation access candidates. Shared decoding currently targets Thumb/M-profile. | [Host analysis](../extending/host-analysis.md) |
+| Shared host analysis | Lazy image, symbol, DWARF, decoding, and RTOS facts; at `e44dca2`, cached constant-propagation access candidates. Shared decoding currently targets Thumb/M-profile. | [Host analysis](../extending/host-analysis.md) |
 | In-tree and external plugins | Preparation registration, native SDK, external runtime ABI v1 | [Plugin development](../extending/virtual-plugins.md) |
 | RTOS introspection | Six adapters; task walkers and event hooks have different coverage | [Introspection](../instrumentation/introspection.md) |
 | Function counts and traces | Entry instrumentation, counts, and selected argument decoding | [Tracing](../instrumentation/tracing-and-sanitizers.md) |
@@ -35,7 +37,7 @@ This book records the source revision behind each explanation. Core chapters ret
 | --- | --- | --- |
 | INAV: `3910be12b82443efe8abb75ef89aa02f5ef047f4` | MATEKF405 firmware adaptation, FMU bridge, receiver input, and smoke tests | Documented source compatibility patch; short functional/flight checks, not a blanket mission qualification |
 | PX4: `0e13b73986a66270a6d8452b2c0147af7b874d29` | FMUv6C profiles across five release lines, version sweep, and cache-management work | Version-specific validation levels and cache configuration requirements |
-| Supercache | Translated-code caching in a separately pinned QEMU backend; managed cache configuration in the PX4 frontend snapshot | The stock QEMU submodule pin in main `a38af40` does not provide this feature. Follow the [Supercache chapter](../advanced/supercache.md) for the exact revisions, setup, and compatibility boundary. |
+| Supercache | Translated-code caching in a separately pinned QEMU backend; managed cache configuration in the PX4 frontend snapshot | The pinned QEMU submodule base in main `e44dca2`, even after its ordinary five FastDyn patches, does not provide the separately developed persistent-cache backend. Follow the [Supercache chapter](../advanced/supercache.md) for the exact revisions, setup, and compatibility boundary. |
 
 [Branch previews](../simulation/branch-previews.md) gives the INAV and PX4 checkout commands, firmware identities, source links, and reported outcomes. The [Supercache chapter](../advanced/supercache.md) specifies its separate frontend/backend pair. The book does not independently rerun those flight validations.
 
@@ -58,8 +60,8 @@ Record the firmware, model, adaptation, time policy, and success condition with 
 
 - [Main snapshot](https://github.com/boardrunner2049/FastDyn/tree/f9666d7f518c373e89831d8e14a6371a27fe6436)
 - [JIT patcher and manual-lab snapshot](https://github.com/boardrunner2049/FastDyn/tree/5b8bf3ddb01d63a4d5f86701d358e390a950cb9c)
-- [Automatic MMIO implementation snapshot](https://github.com/boardrunner2049/FastDyn/tree/a38af408451394ea2f41be1e9cf1e96bc46c370f)
+- [Updated MMIO and hot-path implementation snapshot](https://github.com/boardrunner2049/FastDyn/tree/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576)
 - [Source documentation overview](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/README.md)
 - [Runtime SDK](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/include/fastdyn_runtime.h)
 - [Host-analysis contract](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/docs/HostAnalysisAPI.md)
-- [Integration-test guide](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/tests/integration/README.md)
+- [Latest integration-test guide](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/tests/integration/README.md)

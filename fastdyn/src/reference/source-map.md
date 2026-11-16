@@ -91,6 +91,10 @@ These links preserve the concrete entry points that a broad chapter cannot repla
 | [Raw firmware fixtures](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/tests/raw/README.md) | [Testing and reproducibility](../analysis/testing-and-reproducibility.md) | Raw conversion commands and the metadata discarded by that format. |
 | [Idle hardware firmware](https://github.com/boardrunner2049/FastDyn/blob/f9666d7f518c373e89831d8e14a6371a27fe6436/tests/idle_firmwares/README.md) | [Hardware and traces](../devices/hardware-and-traces.md) | Board-side interrupt servers, prebuilt images, and the IRQ-number contract. |
 
+## Recent implementation guides
+
+The post-core changes reviewed at [FastDyn `e44dca2`](https://github.com/boardrunner2049/FastDyn/commit/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576) have dedicated source notes: [automatic MMIO and six-case regressions](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/docs/AutomaticMMIOOptimization.md), [MMIO saved-PC callback contract and recorded benchmark](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/docs/mmio_saved_pc_benchmark.md), and [ARM32 constant-PC chaining and recorded benchmark](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/docs/constant_pc_benchmark.md). The book maps these to [Automatic MMIO](../designs/automatic-mmio.md), [hot-path optimizations](../advanced/runtime-fast-paths.md), and [testing](../analysis/testing-and-reproducibility.md). Older core-source links in the map intentionally remain pinned to their original `f9666d7` baseline.
+
 ## Find the owning implementation
 
 | Location | Start here when changing or checking |

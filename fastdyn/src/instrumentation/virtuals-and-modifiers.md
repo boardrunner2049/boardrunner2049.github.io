@@ -119,11 +119,23 @@ The five fields are hexadecimal PC, direction, device label, hexadecimal offset,
 
 This manual translation path uses the offset into a single 1 KiB `gpio_memory` buffer and does not select a backing region from the device label. Keep every access within that buffer: the native table reader does not bounds-check the offset. The hook runs before the original instruction; it does not suppress that instruction by itself. The [inline device modeling chapter](../advanced/inline-device-modeling.md) explains the backend's transfer width, an explicit same-site PC modifier for skipping the original MMIO, and the required control-flow checks in a lab pinned to `5b8bf3d`.
 
+## Fixed-PC modifier chaining (ARM32)
+
+With the updated five-patch QEMU backend at [`e44dca2`](https://github.com/boardrunner2049/FastDyn/commit/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576), an eligible **unconditional immediate assignment to the ARM32 PC** is automatically lowered to QEMU's direct translated-block exit rather than the general modifier callback exit. The TOML syntax is unchanged:
+
+```toml
+[[CPU.cpu0.modifiers]]
+at = "0x08001234"
+patch = "r15 <- 0x08001000"
+```
+
+The source and absolute destination must be on the same guest page, align with A32 or Thumb mode, and have a usable outgoing QEMU chaining slot. IT/ECI/ICI, single-step, conflicting fragments/callbacks, and state-dependent targets retain the legacy behavior. AArch64 register 15 is not a PC alias. Disable promotion for comparison with `FASTDYN_CONST_PC_CHAIN=0`; use `FASTDYN_CONST_PC_CHAIN_TRACE=1` for translation-time reasons, not a per-hit counter. The runtime retains the original PC value, suffix and instruction accounting; on PC-relative alias mismatch it takes the legacy general exit. See [Hot-path optimization contracts](../advanced/runtime-fast-paths.md) for the precise constraints, regression command, and bounded benchmark.
+
 ## Experimental automatic MMIO
 
-Revision **`a38af408451394ea2f41be1e9cf1e96bc46c370f`** adds the `mmio_opt` run plugin. It combines model-operation metadata with discovered Cortex-M Thumb access sites, binds reads to initialized elder instances, and registers guarded replacements through the native runtime SDK. The [runtime module](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/virtuals/mmio_opt/runtime/mmio_opt.c) and [QEMU patch](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/patches/qemu-fastdyn-mmio.patch) implement this separate path.
+Revision **`e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576`** adds the `mmio_opt` run plugin. It combines model-operation metadata with discovered Cortex-M Thumb access sites, binds reads to initialized elder instances, and registers guarded replacements through the native runtime SDK. The [runtime module](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/virtuals/mmio_opt/runtime/mmio_opt.c) and [QEMU patch](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/patches/qemu-fastdyn-mmio.patch) implement this separate path.
 
-A successful fast arm replaces the original scalar read directly; it needs no manual PC-skipping modifier. The [host compatibility gate](https://github.com/boardrunner2049/FastDyn/blob/a38af408451394ea2f41be1e9cf1e96bc46c370f/virtuals/mmio_opt/host/preprocessor.py) disables automatic substitution when `finline` is active. Use [Automatic MMIO optimization](../designs/automatic-mmio.md) for configuration, the shipped demonstration, and the experimental limits that must be checked before treating a replacement as equivalent.
+The current extractor declines unsafe effects, aliases and predicates; the native fast arm preserves alignment faults and uses ordinary dispatch when an MMIO observer is active (including later registrations). A successful fast arm replaces the original scalar read directly; it needs no manual PC-skipping modifier. The [host compatibility gate](https://github.com/boardrunner2049/FastDyn/blob/e44dca2edbc3b32cb1f2a48d3d0be203bd9b5576/virtuals/mmio_opt/host/preprocessor.py) disables automatic substitution when `finline` is active. Use [Automatic MMIO optimization](../designs/automatic-mmio.md) for configuration, the shipped demonstration, and the bounded admission and evidence requirements; arbitrary device models are not proven equivalent.
 
 ## Source guide
 

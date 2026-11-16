@@ -54,6 +54,7 @@
 * [Supercache](advanced/supercache.md)
 * [Inline device modeling](advanced/inline-device-modeling.md)
   * [Automatic MMIO optimization](designs/automatic-mmio.md)
+* [Hot-path optimizations](advanced/runtime-fast-paths.md)
 * [JIT patcher](advanced/jit-patcher.md)
   * [Translation insertion design](designs/translation-insertion.md)
 
