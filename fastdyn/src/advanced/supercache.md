@@ -4,6 +4,8 @@ Supercache saves QEMU's generated native code so that a later process can reuse 
 
 This is an implemented development-branch capability with a separate QEMU prerequisite. It is not enabled by the current main-branch build.
 
+For offline transformations of captured native code, continue to the [Supercache optimizer](supercache-optimizer.md). That chapter reviews FastDyn `scopt` at `124699d` and QEMU `934890e`, including capture metadata, profile-guided layout, cross-block optimization, and host inlining. It provides its own matching build and artifact requirements. The earlier frontend/backend pair below is the cache-reuse recipe reviewed by this chapter.
+
 ## Choose the matching revisions
 
 | Component | Reviewed revision | Supercache capability |
