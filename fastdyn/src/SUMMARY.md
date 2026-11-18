@@ -53,6 +53,7 @@
 
 * [Supercache](advanced/supercache.md)
 * [Supercache optimizer](advanced/supercache-optimizer.md)
+* [FirmBOLT](advanced/firmbolt.md)
 * [Inline device modeling](advanced/inline-device-modeling.md)
   * [Automatic MMIO optimization](designs/automatic-mmio.md)
 * [Hot-path optimizations](advanced/runtime-fast-paths.md)

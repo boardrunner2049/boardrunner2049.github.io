@@ -16,6 +16,7 @@ A productive FastDyn experiment starts with a question that has a visible result
 | Does a controller behave correctly in a scenario? | An appropriate flight-controller/FMU configuration | Sensor/controller/actuator progress and a scenario outcome |
 | How do I repeat many independent trials? | `fastdyn loop` or `fastdyn swarm` | Separate trial or worker artifacts |
 | How do I optimize a saved native translation cache? | [Supercache optimizer](../advanced/supercache-optimizer.md) on its pinned `scopt` branch | A validated candidate artifact or an explicit rejection, followed by workload-specific comparison |
+| How do I optimize the firmware ELF itself? | [FirmBOLT](../advanced/firmbolt.md) on its pinned `firmbolt` branch | An image produced by the extended BOLT pipeline, with checked layout, reference, origin, and observation contracts |
 | Can an external controller pace firmware execution? | [FastDyn as a secondary simulator](../advanced/fastdyn-as-secondary.md) | QMP time grants, observed stops, and reported guest time |
 | How do I synchronize several firmware instances? | [Multiple firmwares](../simulation/multiple-firmwares.md) and the lockstep utility | Guests paused at common time boundaries; connections are experiment-specific |
 | How does typed routing and scheduling work in Tempo? | [Tempo's mock federation](../advanced/tempo.md) | Compiled connections, participant progress, routed values, and trace records |

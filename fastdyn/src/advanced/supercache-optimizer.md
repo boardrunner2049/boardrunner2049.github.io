@@ -2,6 +2,8 @@
 
 `scopt` optimizes native code that QEMU has already translated and saved in a Supercache. It can improve the arrangement of translation blocks, specialize selected connections between them, remove proved-dead state stores, and inline supported host helper calls. The firmware ELF remains the input to FastDyn; the optimizer produces a separately validated native-cache artifact.
 
+For optimization of instructions in the firmware ELF, see [FirmBOLT](firmbolt.md). That separately pinned branch extends BOLT with a Cortex-M/Thumb backend and firmware publication checks. The two tools operate at different stages: FirmBOLT prepares a firmware image; `scopt` prepares a saved host translation cache.
+
 This chapter covers FastDyn's **`scopt` branch at `124699db203aae581735b4bdfb82e9b949332405`**, paired with **QEMU `934890ed5119ef70da69276991d921573f23ed4f`**. That backend includes capture, profiling, and the v5/v6 loader support needed by these workflows. The earlier [Supercache](supercache.md) chapter explains persistence and cache identity, but its historical build recipe does not produce the metadata required here. Use the matching source and backend for this chapter's lab. [Source lock](https://github.com/boardrunner2049/FastDyn/blob/124699db203aae581735b4bdfb82e9b949332405/tools/scopt/fixtures/host-inline/source-lock.json)
 
 ## What the optimizer works on
